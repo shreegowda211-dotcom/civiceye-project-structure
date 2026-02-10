@@ -1,13 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import { Routes, Route } from "react-router-dom";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 export default function App() {
   return (
-    <h1 className="text-3xl font-bold text-red-500">
-      Tailwind is working 🚀
-    </h1>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      {/* Fallback to landing for unknown routes */}
+      <Route path="*" element={<Landing />} />
+    </Routes>
   );
 }
 
