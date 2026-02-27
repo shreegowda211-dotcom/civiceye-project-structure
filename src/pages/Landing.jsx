@@ -75,7 +75,7 @@ export default function Landing() {
 
         {/* HERO */}
         <section className="relative bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-white">
-          <div className="mx-auto max-w-6xl px-6 py-20 text-center animate-fade-in">
+          <div className="w-full px-10 py-16 text-center animate-fade-in">
             <p className="inline-block rounded-full bg-white/10 px-4 py-1 text-xs tracking-wide backdrop-blur">
               Government of India Initiative
             </p>
@@ -112,8 +112,9 @@ export default function Landing() {
         </section>
 
         {/* FEATURES */}
-        <section className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center text-2xl font-semibold">
+        <section className="w-full py-16">
+        <div className="mx-auto max-w-screen-xl px-6">
+          <h2 className="text-center text-2xl font-semibold" style={{color : "#0f273b"}} >
             How CivicEye Works
           </h2>
 
@@ -121,7 +122,7 @@ export default function Landing() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-100 transition hover:shadow-md"
+                className="group rounded-xl bg-white p-6 shadow-sm transition hover:shadow-lg hover:-translate-y-1 duration-300"
               >
                 <h3 className="text-sm font-semibold">{f.title}</h3>
                 <p className="mt-2 text-sm text-slate-500">
@@ -130,36 +131,55 @@ export default function Landing() {
               </div>
             ))}
           </div>
+          </div>
         </section>
 
         {/* PROCESS */}
         <section className="bg-slate-100/60">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <h2 className="text-center text-2xl font-semibold">
+          <div className="mx-auto max-w-screen-xl px-6 py-16">
+            <h2 className="text-center text-3xl font-bold text-slate-800" style={{color : "#0f273b"}}>
               Simple 4-Step Process
             </h2>
 
-            <div className="mt-10 grid gap-8 md:grid-cols-4">
-              {steps.map((step, i) => (
-                <div key={step.title} className="text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-600 text-white font-semibold">
-                    {i + 1}
-                  </div>
-                  <h3 className="mt-4 text-sm font-semibold">
-                    {step.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {step.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <div className="relative mt-12 grid gap-8 md:grid-cols-4">
+
+  {/* Connecting Line */}
+  <div
+    className="absolute left-0 right-0 hidden md:block"
+    style={{ top: "1.75rem" }}
+  >
+    <div className="px-10">
+      <div className="h-0.5 bg-gradient-to-r from-sky-500 via-sky-400 to-sky-500"></div>
+    </div>
+  </div>
+
+  {steps.map((step, i) => (
+    <div
+      key={step.title}
+      className="relative z-10 rounded-xl bg-white p-6 shadow-sm transition hover:shadow-lg hover:-translate-y-1 duration-300"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center 
+                      rounded-full bg-sky-600 text-white font-bold text-lg 
+                      shadow-md ring-4 ring-white">
+        {i + 1}
+      </div>
+
+      <h3 className="mt-5 text-base font-semibold text-slate-800">
+        {step.title}
+      </h3>
+
+      <p className="mt-2 text-sm text-slate-500">
+        {step.description}
+      </p>
+    </div>
+  ))}
+</div>
           </div>
         </section>
 
         {/* ROLES */}
-        <section className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center text-2xl font-semibold">
+        <section className="mx-auto max-w-screen-xl px-6 py-16">
+          <h2 className="text-center text-2xl font-semibold" style={{color : "#0f273b"}} >
             For Everyone
           </h2>
 
@@ -167,7 +187,7 @@ export default function Landing() {
             {roles.map((role) => (
               <div
                 key={role.title}
-                className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-100"
+                className="group rounded-xl bg-white p-6 shadow-sm transition hover:shadow-lg hover:-translate-y-1 duration-300"
               >
                 <h3 className="text-base font-semibold">
                   {role.title}
@@ -191,7 +211,7 @@ export default function Landing() {
 
         {/* CTA */}
         <section className="bg-sky-800 text-white">
-          <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+          <div className="mx-auto max-w-screen-xl px-6 py-16 text-center">
             <h2 className="text-2xl font-semibold">
               Ready to Make a Difference?
             </h2>

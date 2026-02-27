@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from 'react-router-dom';
 
 export default function Header() {
   return (
@@ -21,12 +22,8 @@ export default function Header() {
 
         {/* Auth actions */}
         <div className="flex items-center gap-4 text-sm">
-          <button className="text-slate-600 hover:text-slate-900">
-            Login
-          </button>
-          <button className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
-            Register
-          </button>
+          <Link to="/login" className="text-slate-600 hover:text-slate-900">Login</Link>
+          <Link to="/register" className="rounded-lg bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"> Register </Link>
         </div>
       </div>
     </header>

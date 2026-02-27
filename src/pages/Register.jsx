@@ -52,9 +52,9 @@ export default function Register() {
                 <button className="rounded-md px-2 py-2 text-slate-600 hover:bg-white">
                   Officer
                 </button>
-                <button className="rounded-md px-2 py-2 text-slate-600 hover:bg-white">
+                {/* <button className="rounded-md px-2 py-2 text-slate-600 hover:bg-white">
                   Admin
-                </button>
+                </button> */}
               </div>
               <p className="mt-1 text-[11px] text-slate-500">
                 Report &amp; track issues
@@ -145,5 +145,5 @@ export default function Register() {
       </div>
     </div>
   );
-}
+}      
 

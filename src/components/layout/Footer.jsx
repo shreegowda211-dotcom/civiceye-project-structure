@@ -1,16 +1,20 @@
 import React from "react";
+import {Link} from 'react-router-dom';
+import { ShieldCheck } from "lucide-react";
 
 export default function Footer() {
+
+
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-6xl px-6 py-10 md:px-8 lg:px-10">
         <div className="grid gap-8 text-sm text-slate-600 md:grid-cols-4">
           {/* Brand */}
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2">
-              <span className="h-7 w-7 rounded-lg bg-slate-700" />
-              <span className="text-sm font-semibold text-white">CivicEye</span>
-            </div>
+           <div className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 shadow-md hover:shadow-lg transition">
+  <ShieldCheck className="h-7 w-7 text-white" />
+  <span className="text-sm font-semibold text-white">CivicEye</span>
+</div>
             <p className="max-w-xs text-xs text-slate-500 md:text-sm">
               Smart Public Issue Reporting &amp; Resolution System for transparent
               urban governance.
@@ -20,12 +24,28 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h3 className="text-sm font-semibold text-slate-900">Quick Links</h3>
-            <ul className="mt-3 space-y-1.5 text-xs text-slate-600 md:text-sm">
-              <li>Report Issue</li>
-              <li>Track Status</li>
-              <li>Transparency Dashboard</li>
-              <li>Contact Us</li>
-            </ul>
+            <ul className="mt-3 space-y-1.5 text-xs md:text-sm">
+  <li>
+    <Link to="/report"className="text-slate-600 transition hover:text-slate-900 hover:translate-x-1 inline-block duration-200">
+      Report Issue
+    </Link>
+  </li>
+  <li>
+    <Link to="/track" className="text-slate-600 transition hover:text-slate-900 hover:translate-x-1 inline-block duration-200">
+      Track Status
+    </Link>
+  </li>
+  <li>
+    <Link to="/dashboard" className="text-slate-600 transition hover:text-slate-900 hover:translate-x-1 inline-block duration-200">
+      Transparency Dashboard
+    </Link>
+  </li>
+  <li>
+    <Link to="/contact" className="text-slate-600 transition hover:text-slate-900 hover:translate-x-1 inline-block duration-200">
+      Contact Us
+    </Link>
+  </li>
+</ul>
           </div>
 
           {/* Departments */}
