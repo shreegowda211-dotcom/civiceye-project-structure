@@ -1,9 +1,48 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { User, Briefcase, Shield } from "lucide-react";
+import axios from "axios";
 
 export default function Login() {
   const [role, setRole] = useState("Citizen");
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  const handleChange = (e) => setForm({ ...form, [e.target.id]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.email || !form.password) {
+      setMessage({ type: "error", text: "Email and password are required" });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await axios.post("http://localhost:7000/api/login", {
+        ...form,
+        role,
+      });
+      const successMsg = { type: "success", text: "Login successful ✅" };
+      setMessage(successMsg);
+      console.log("set message", successMsg);
+      console.log(res.data);
+      // redirect based on role if needed
+    } catch (error) {
+      const errMsg = {
+        type: "error",
+        text: error.response?.data?.message || "Login failed ❌",
+      };
+      setMessage(errMsg);
+      console.log("set message", errMsg);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 md:grid-cols-2">
@@ -44,6 +83,22 @@ export default function Login() {
               Sign in to your CivicEye account
             </p>
 
+            {/* flash message */}
+            {console.log("Login render message", message)}
+            {message && (
+              <div
+                className={`mt-4 rounded p-3 text-sm shadow-sm border-l-4
+                  ${
+                    message.type === "error"
+                      ? "bg-red-100 text-red-800 border-red-500"
+                      : "bg-green-100 text-green-800 border-green-500"
+                  }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Premium Role selector */}
 <div className="mt-6">
   <label className="block text-xs font-medium text-slate-700">
@@ -61,6 +116,7 @@ export default function Login() {
           ? "border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-100 scale-[1.04]"
           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
       }`}
+      aria-pressed={role === "Citizen"}
     >
       <div className="flex items-center gap-3">
         <div
@@ -90,6 +146,7 @@ export default function Login() {
           ? "border-sky-500 bg-sky-50 shadow-lg shadow-sky-100 scale-[1.04]"
           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
       }`}
+      aria-pressed={role === "Officer"}
     >
       <div className="flex items-center gap-3">
         <div
@@ -119,6 +176,7 @@ export default function Login() {
           ? "border-purple-500 bg-purple-50 shadow-lg shadow-purple-100 scale-[1.04]"
           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
       }`}
+      aria-pressed={role === "Admin"}
     >
       <div className="flex items-center gap-3">
         <div
@@ -153,6 +211,8 @@ export default function Login() {
               <input
                 id="email"
                 type="email"
+                 value={form.email}
+                onChange={handleChange}
                 placeholder="you@example.com"
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 focus:shadow-md focus:scale-[1.01]"
               />
@@ -174,14 +234,19 @@ export default function Login() {
               <input
                 id="password"
                 type="password"
+                value={form.password}
+                onChange={handleChange}
                 placeholder="••••••••"
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 focus:shadow-md focus:scale-[1.01]"
               />
             </div>
 
             {/* Sign in button */}
-            <button className="mt-6 w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
-              Sign In
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-6 w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
+              {loading ? "Signing In..." : "Sign In"}
             </button>
 
             {/* Register link */}
@@ -194,15 +259,16 @@ export default function Login() {
                 Register here
               </Link>
             </p>
+          </form>
 
-            {/* Demo access box */}
+            {/* // Demo access box 
             <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs text-slate-600">
               <p className="font-semibold text-slate-800">Demo Access</p>
               <p className="mt-1">
                 Use any email and password to login. Select your role above to
                 access different dashboards.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
