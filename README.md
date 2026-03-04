@@ -59,56 +59,6 @@ This project demonstrates:
 
 ---
 
-## 📁 Project Structure
-
-civiceye-project-structure/
-│
-├── backend/
-│   ├── controller/
-│   │   ├── loginController.js
-│   │   ├── officerController.js
-│   │
-│   ├── model/
-│   │   ├── complaintSchema.js
-│   │   ├── officerSchema.js
-│   │
-│   ├── router/
-│   │   ├── adminRouter.js
-│   │   ├── citizenRouter.js
-│   │   ├── officerRouter.js
-│   │
-│   ├── middleware/
-│   │   ├── authAdmin.js
-│   │
-│   ├── config.js
-│   ├── index.js
-│   └── package.json
-│
-├── civiceye-project/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── common/
-│   │   │   ├── layout/
-│   │   │   └── ui/
-│   │   │
-│   │   ├── pages/
-│   │   │   ├── admin/
-│   │   │   ├── citizen/
-│   │   │   └── officer/
-│   │   │
-│   │   ├── contexts/
-│   │   ├── types/
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   │
-│   ├── package.json
-│   └── vite.config.js
-│
-└── .gitignore
-
-
----
-
 ## ⚙️ Setup Instructions
 
 ### 1️⃣ Clone the Repository
