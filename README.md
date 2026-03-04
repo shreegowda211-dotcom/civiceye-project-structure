@@ -1,111 +1,141 @@
-CivicEye
+# CivicEye
 
-A full-stack civic issue reporting and management system built using the MERN stack.
+Full-stack civic issue reporting and management system built using the MERN stack.
 
-CivicEye enables citizens to report local civic problems and allows officers and administrators to manage and track issue resolution through secure, role-based dashboards.
+CivicEye enables citizens to report civic problems and allows officers and administrators to manage and track issue resolution through secure, role-based dashboards.
 
-Repository
+---
+
+## 🔗 Repository
 
 https://github.com/shreegowda211-dotcom/civiceye-project-structure
 
-Overview
+---
 
-CivicEye is designed to digitize civic complaint handling with a structured workflow and transparent status tracking system.
+## 📌 Overview
 
-The application demonstrates real-world implementation of:
+CivicEye digitizes civic complaint handling with structured workflows and transparent status tracking.
 
-Role-based authentication
+This project demonstrates:
 
-Protected routes
+- Role-based authentication
+- Protected routes
+- REST API integration
+- Modular full-stack architecture
 
-REST API integration
+---
 
-Modular full-stack architecture
+## 🛠️ Tech Stack
 
-Tech Stack
+### Frontend
+- React (Vite)
+- Tailwind CSS
+- Context API
 
-Frontend
+### Backend
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT Authentication
 
-React (Vite)
+---
 
-Tailwind CSS
+## 🚀 Core Features
 
-Context API
+### 👤 Citizen
+- Register and login
+- Submit complaints
+- Track complaint status
 
-Backend
+### 👮 Officer
+- View assigned complaints
+- Update issue progress
 
-Node.js
+### 🛠️ Admin
+- Monitor system activity
+- Manage officers
+- View complaint statistics
 
-Express.js
+---
 
-MongoDB
+## 📁 Project Structure
 
-Mongoose
-
-JWT Authentication
-
-Core Features
-Citizen
-
-Register and login
-
-Submit complaints
-
-Track complaint status
-
-Officer
-
-View assigned complaints
-
-Update issue progress
-
-Admin
-
-Monitor system activity
-
-Manage officers
-
-View complaint statistics
-
-Project Structure
 civiceye-project-structure/
 │
 ├── backend/
 │   ├── controller/
+│   │   ├── loginController.js
+│   │   ├── officerController.js
+│   │
 │   ├── model/
+│   │   ├── complaintSchema.js
+│   │   ├── officerSchema.js
+│   │
 │   ├── router/
+│   │   ├── adminRouter.js
+│   │   ├── citizenRouter.js
+│   │   ├── officerRouter.js
+│   │
 │   ├── middleware/
-│   └── config.js
+│   │   ├── authAdmin.js
+│   │
+│   ├── config.js
+│   ├── index.js
+│   └── package.json
 │
 ├── civiceye-project/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── contexts/
-│       └── types/
-Setup
-Clone
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   ├── layout/
+│   │   │   └── ui/
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── admin/
+│   │   │   ├── citizen/
+│   │   │   └── officer/
+│   │   │
+│   │   ├── contexts/
+│   │   ├── types/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   │
+│   ├── package.json
+│   └── vite.config.js
+│
+└── .gitignore
+
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the Repository
+
+```bash
 git clone https://github.com/shreegowda211-dotcom/civiceye-project-structure.git
 cd civiceye-project-structure
-Backend
+
+## ⚙️ Setup Instructions
+
+---
+
+### 2️⃣ Backend Setup
+
+```bash
 cd backend
+npm install
 node index.js
 
-Create a .env file:
+---
 
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
-PORT=7000
+### 2️⃣ Frontend Setup
 
-Run backend:
-cd backend
-npm i
-node index.js
-Frontend
+```bash
 cd civiceye-project
 npm install
 npm run dev
 
-Frontend: http://localhost:5173
+---
 
-Backend: http://localhost:7000
