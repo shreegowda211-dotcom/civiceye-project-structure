@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ShieldCheck, User, Briefcase } from "lucide-react";
 import axios from "axios";
 
 export default function Register() {
+  const navigate = useNavigate();
   const [role, setRole] = useState("Citizen");
 
   const [form, setForm] = useState({
@@ -46,10 +47,23 @@ export default function Register() {
 
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:7000/api/register", {
-        ...form,
-        role,
-      });
+      // try generic register first
+      let res;
+      try {
+        res = await axios.post("http://localhost:7000/api/register", {
+          ...form,
+          role,
+        });
+      } catch (err) {
+        // if server blocks admin registration or generic route missing, try role-specific
+        if (err.response?.status === 404) {
+          const endpoint = role.toLowerCase();
+          res = await axios.post(`http://localhost:7000/api/${endpoint}/register`, {
+            ...form,
+            role,
+          });
+        } else throw err;
+      }
 
       const successMsg = { type: "success", text: "Registration successful ✅" };
       setMessage(successMsg);
@@ -57,6 +71,11 @@ export default function Register() {
 
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
       setRole("Citizen");
+
+      // Navigate to Login page after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (err) {
       console.error(err);
       const errMsg = { type: "error", text: err.response?.data?.message || "Registration failed ❌" };
@@ -132,28 +151,86 @@ export default function Register() {
               </div>
 
               <div className="mt-6 space-y-1.5">
-                <label htmlFor="name" className="block text-xs font-medium text-slate-700">Full Name</label>
-                <input id="name" type="text" value={form.name} onChange={handleChange} placeholder="Enter your full name" className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <label 
+                 htmlFor="name" 
+                 className="block text-xs font-medium text-slate-700">
+                  Full Name
+                </label>
+
+                <input 
+                 id="name" 
+                 type="text" 
+                 value={form.name} 
+                 onChange={handleChange} 
+                 placeholder="Enter your full name" 
+                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" 
+                />
               </div>
 
               <div className="mt-4 space-y-1.5">
-                <label htmlFor="email" className="block text-xs font-medium text-slate-700">Email</label>
-                <input id="email" type="email" value={form.email} onChange={handleChange} placeholder="you@example.com" className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <label 
+                 htmlFor="email" 
+                 className="block text-xs font-medium text-slate-700">
+                  Email
+                </label>
+
+                <input 
+                 id="email" 
+                 type="email" 
+                 value={form.email} 
+                 onChange={handleChange} 
+                 placeholder="you@example.com" 
+                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" 
+                />
               </div>
 
               <div className="mt-4 space-y-1.5">
-                <label htmlFor="password" className="block text-xs font-medium text-slate-700">Password</label>
-                <input id="password" type="password" value={form.password} onChange={handleChange} placeholder="Create a strong password" className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <label 
+                htmlFor="password" 
+                 className="block text-xs font-medium text-slate-700">
+                  Password
+                </label>
+
+                <input 
+                 id="password" 
+                 type="password" 
+                 value={form.password} 
+                 onChange={handleChange} 
+                 placeholder="Create a strong password" 
+                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" 
+                 />
               </div>
 
               <div className="mt-4 space-y-1.5">
-                <label htmlFor="confirmPassword" className="block text-xs font-medium text-slate-700">Confirm Password</label>
-                <input id="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm your password" className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <label 
+                 htmlFor="confirmPassword" 
+                 className="block text-xs font-medium text-slate-700">
+                  Confirm Password
+                </label>
+                
+                <input 
+                 id="confirmPassword" 
+                 type="password" 
+                 value={form.confirmPassword} 
+                 onChange={handleChange} 
+                 placeholder="Confirm your password"
+                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
               </div>
 
-              <button type="submit" disabled={loading} className="mt-6 w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50">{loading ? 'Registering...' : 'Create Account'}</button>
+              <button 
+               type="submit" 
+               disabled={loading} 
+               className="mt-6 w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50">
+                {loading ? 'Registering...' : 'Create Account'}
+              </button>
 
-              <p className="mt-4 text-center text-xs text-slate-600">Already have an account? <Link to="/login" className="font-semibold text-sky-700 hover:underline">Sign in</Link></p>
+              <p className="mt-4 text-center text-xs text-slate-600">
+                Already have an account? 
+                 <Link to="/login" 
+                  className="font-semibold text-sky-700 hover:underline">
+                    Sign in
+                  </Link>
+              </p>
             </form>
           </div>
         </div>

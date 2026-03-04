@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, Briefcase, Shield } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [role, setRole] = useState("Citizen");
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -20,15 +23,40 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:7000/api/login", {
-        ...form,
-        role,
-      });
+      // try generic endpoint first
+      let res;
+      try {
+        res = await axios.post("http://localhost:7000/api/login", {
+          ...form,
+          role,
+        });
+      } catch (err) {
+        // if generic endpoint is not found, try role-specific endpoint
+        if (err.response?.status === 404 || err.response?.status === 403) {
+          const endpoint = role.toLowerCase();
+          res = await axios.post(`http://localhost:7000/api/${endpoint}/login`, {
+            ...form,
+          });
+        } else throw err;
+      }
       const successMsg = { type: "success", text: "Login successful ✅" };
       setMessage(successMsg);
-      console.log("set message", successMsg);
-      console.log(res.data);
-      // redirect based on role if needed
+
+      // call login with user data from backend response
+      const user = res.data.user || {};
+      login({
+        id: user.id,
+        name: user.name || user.email,
+        email: user.email,
+        role: user.role || role.toLowerCase(),
+        token: res.data.token,
+      });
+
+      // navigate to role-specific home after login
+      setTimeout(() => {
+        const dest = `/${role.toLowerCase()}`;
+        navigate(dest);
+      }, 500);
     } catch (error) {
       const errMsg = {
         type: "error",
@@ -190,6 +218,13 @@ export default function Login() {
         </div>
         <div>
           <p className="text-sm font-semibold text-slate-900">Admin</p>
+            {/* admin credential hint */}
+            {role === "Admin" && (
+              <p className="mt-2 text-xs text-slate-500">
+                <strong>Note:</strong> admin account uses fixed credentials:<br />
+                <code>shreegowda211@gmail.com</code> / <code>Admin@shree1</code>
+              </p>
+            )}
           <p className="text-[11px] text-slate-500">
             Platform oversight & control
           </p>

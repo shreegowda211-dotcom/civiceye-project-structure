@@ -1,0 +1,15 @@
+Since you’ve built the admin user as a single, hard‑coded account that never gets created or modified at runtime, there’s no need for a Mongoose schema or collection today – the app doesn’t query MongoDB for the admin at all.
+The login check just compares the supplied email/password against the constants in config.js and signs a token with ADMIN_KEY.
+
+However, if your requirements ever change – e.g. you want:
+
+more than one admin,
+the ability to add/remove or update admins through an interface,
+to record admin metadata (name, last‑login, etc.)
+… then you’d want an admin schema and collection, and the login code would query that model instead of (or in addition to) the static credentials.
+So the short answer:
+
+No, a schema isn’t necessary if you’re happy with one fixed admin account.
+If you anticipate needing dynamic/admins stored in the database, then yes, add a schema and adjust the login logic accordingly.
+
+Let me know whether you’d like to implement the latter; I can draft an Admin model and update the controllers/routers for you.
