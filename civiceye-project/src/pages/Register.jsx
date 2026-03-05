@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShieldCheck, User, Briefcase } from "lucide-react";
-import axios from "axios";
+import { authAPI } from "@/services/api";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -47,26 +47,24 @@ export default function Register() {
 
     try {
       setLoading(true);
-      // try generic register first
       let res;
       try {
-        res = await axios.post("http://localhost:7000/api/register", {
-          ...form,
-          role,
-        });
+        // Try role-specific registration
+        if (role.toLowerCase() === "citizen") {
+          res = await authAPI.registerCitizen(form);
+        } else if (role.toLowerCase() === "officer") {
+          res = await authAPI.registerOfficer(form);
+        } else {
+          res = await authAPI.register({ ...form, role });
+        }
       } catch (err) {
-        // if server blocks admin registration or generic route missing, try role-specific
+        // Fallback to generic endpoint
         if (err.response?.status === 404) {
-          const endpoint = role.toLowerCase();
-          res = await axios.post(`http://localhost:7000/api/${endpoint}/register`, {
-            ...form,
-            role,
-          });
+          res = await authAPI.register({ ...form, role });
         } else throw err;
       }
 
-      const successMsg = { type: "success", text: "Registration successful ✅" };
-      setMessage(successMsg);
+      setMessage({ type: "success", text: "Registration successful ✅" });
       console.log("register response:", res.data);
 
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
@@ -78,8 +76,10 @@ export default function Register() {
       }, 2000);
     } catch (err) {
       console.error(err);
-      const errMsg = { type: "error", text: err.response?.data?.message || "Registration failed ❌" };
-      setMessage(errMsg);
+      setMessage({
+        type: "error",
+        text: err.response?.data?.message || "Registration failed ❌",
+      });
     } finally {
       setLoading(false);
     }

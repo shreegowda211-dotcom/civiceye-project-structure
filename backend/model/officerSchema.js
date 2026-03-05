@@ -19,6 +19,12 @@ const officerSchema = new mongoose.Schema({
         enum: ["Citizen", "Officer", "Admin"],
         required: true,
         default: "Officer"
+    },
+    department: {
+        type: String,
+        enum: ["Road Damage", "Garbage", "Streetlight", "Water Leakage", "Other"],
+        required: true,
+        description: "Category of issues this officer handles"
     }
 }, {timestamps: true}); 
 

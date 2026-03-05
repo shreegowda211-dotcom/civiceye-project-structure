@@ -1,20 +1,43 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // start with no authenticated user
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Initialize from localStorage
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('civiceye_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      const token = localStorage.getItem('civiceye_token');
+      return !!token;
+    } catch {
+      return false;
+    }
+  });
 
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
+    
+    // Persist to localStorage
+    localStorage.setItem('civiceye_user', JSON.stringify(userData));
+    localStorage.setItem('civiceye_token', userData.token || '');
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
+    
+    // Clear localStorage
+    localStorage.removeItem('civiceye_user');
+    localStorage.removeItem('civiceye_token');
   };
 
   return (

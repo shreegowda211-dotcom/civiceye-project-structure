@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 // Citizen Pages
 import CitizenDashboard from "./pages/citizen/CitizenDashboard";
 import ReportIssue from "./pages/citizen/ReportIssue";
+import AllIssues from "./pages/citizen/AllIssues";
 import IssueTracking from "./pages/citizen/IssueTracking";
 
 // Officer Pages
@@ -19,6 +20,7 @@ import OfficerDashboard from "./pages/officer/OfficerDashboard";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
 import TransparencyDashboard from "./pages/admin/TransparencyDashboard";
 
 const queryClient = new QueryClient();
@@ -98,7 +100,7 @@ function AppRoutes() {
         path="/citizen/issues"
         element={
           <ProtectedRoute allowedRoles={['citizen']}>
-            <CitizenDashboard />
+            <AllIssues />
           </ProtectedRoute>
         }
       />
@@ -174,7 +176,7 @@ function AppRoutes() {
         path="/admin/users"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
+            <AdminUsers />
           </ProtectedRoute>
         }
       />

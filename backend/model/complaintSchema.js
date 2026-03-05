@@ -1,6 +1,13 @@
 import mongoose from "mongoose";
 
 const complaintSchema = new mongoose.Schema({
+  issueId: {
+    type: String,
+    unique: true,
+    required: true,
+    // Format: ISS26001, ISS26002, etc.
+  },
+
   title: {
     type: String,
     required: true,
@@ -48,5 +55,6 @@ const complaintSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-const Complaint = mongoose.model("Complaint", complaintSchema);
+const Complaint = mongoose.model("complaint", complaintSchema);
+
 export default Complaint;

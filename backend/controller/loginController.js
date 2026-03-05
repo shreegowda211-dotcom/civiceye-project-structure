@@ -281,3 +281,45 @@ export const getAdminProfile = async (req, res) => {
     });
   }
 };
+
+// ===============================
+// 👥 Get All Users (Citizens)
+// ===============================
+
+export const getAllCitizens = async (req, res) => {
+  try {
+    const citizens = await citizen.find({}).select("-password");
+    res.status(200).json({
+      success: true,
+      message: "All citizens fetched successfully",
+      data: citizens,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching citizens",
+    });
+  }
+};
+
+// ===============================
+// 👮 Get All Officers
+// ===============================
+
+export const getAllOfficers = async (req, res) => {
+  try {
+    const officers = await officer.find({}).select("-password");
+    res.status(200).json({
+      success: true,
+      message: "All officers fetched successfully",
+      data: officers,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching officers",
+    });
+  }
+};

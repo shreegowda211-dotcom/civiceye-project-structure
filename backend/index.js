@@ -49,6 +49,18 @@ app.use((req, res, next) => {
     console.log(`   ✅ ${userType.toUpperCase()} PROFILE REQUEST`);
     console.log(`   🔐 Auth-Token: ${req.header("auth-token") ? "Present" : "Missing"}`);
   }
+
+  // Log complaint requests
+  if (req.path.includes("/complaints") && req.method === "POST") {
+    console.log(`   📝 COMPLAINT CREATION ATTEMPT`);
+    console.log(`   📋 Data:`, req.body);
+    console.log(`   🔐 Auth-Token: ${req.header("auth-token") ? "Present" : "Missing"}`);
+  }
+
+  if (req.path.includes("/complaints") && req.method === "GET") {
+    console.log(`   📋 COMPLAINT FETCH REQUEST`);
+    console.log(`   🔐 Auth-Token: ${req.header("auth-token") ? "Present" : "Missing"}`);
+  }
   
   // Intercept the response to log the result
   const originalJson = res.json;
@@ -58,6 +70,13 @@ app.use((req, res, next) => {
         console.log(`   ✔️ SUCCESS: ${data.message}`);
       } else {
         console.log(`   ❌ FAILED: ${data.message}`);
+      }
+    }
+    if (req.path.includes("/complaints")) {
+      if (data.message && data.message.includes("success")) {
+        console.log(`   ✔️ SUCCESS: ${data.message}`);
+      } else if (data.error || !data.message?.includes("success")) {
+        console.log(`   ❌ FAILED:`, data.message || data.error);
       }
     }
     res.json = originalJson; // Restore original method
@@ -102,6 +121,17 @@ app.post("/api/login", (req, res) => {
 });
 
 // app.use("/uploads", express.static("uploads")) //access uploaded file in frontend 
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("\n❌ ERROR:", err.message);
+  console.error("   Stack:", err.stack);
+  
+  res.status(500).json({
+    message: "Server error",
+    error: err.message
+  });
+});
 
 const PORT = 7000;
 app.listen(PORT, ()=>{

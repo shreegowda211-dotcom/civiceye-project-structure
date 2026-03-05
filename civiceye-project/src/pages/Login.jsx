@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, Briefcase, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import axios from "axios";
+import { authAPI } from "@/services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,26 +23,28 @@ export default function Login() {
 
     try {
       setLoading(true);
-      // try generic endpoint first
       let res;
       try {
-        res = await axios.post("http://localhost:7000/api/login", {
-          ...form,
-          role,
-        });
+        // Try role-specific login endpoint
+        if (role.toLowerCase() === "citizen") {
+          res = await authAPI.loginCitizen(form);
+        } else if (role.toLowerCase() === "officer") {
+          res = await authAPI.loginOfficer(form);
+        } else if (role.toLowerCase() === "admin") {
+          res = await authAPI.loginAdmin(form);
+        } else {
+          res = await authAPI.login({ ...form, role });
+        }
       } catch (err) {
-        // if generic endpoint is not found, try role-specific endpoint
-        if (err.response?.status === 404 || err.response?.status === 403) {
-          const endpoint = role.toLowerCase();
-          res = await axios.post(`http://localhost:7000/api/${endpoint}/login`, {
-            ...form,
-          });
+        // Fallback to generic endpoint
+        if (err.response?.status === 404) {
+          res = await authAPI.login({ ...form, role });
         } else throw err;
       }
-      const successMsg = { type: "success", text: "Login successful ✅" };
-      setMessage(successMsg);
 
-      // call login with user data from backend response
+      setMessage({ type: "success", text: "Login successful ✅" });
+
+      // Extract user data from backend response
       const user = res.data.user || {};
       login({
         id: user.id,
@@ -52,18 +54,15 @@ export default function Login() {
         token: res.data.token,
       });
 
-      // navigate to role-specific home after login
+      // Navigate to role-specific dashboard
       setTimeout(() => {
-        const dest = `/${role.toLowerCase()}`;
-        navigate(dest);
+        navigate(`/${role.toLowerCase()}`);
       }, 500);
     } catch (error) {
-      const errMsg = {
+      setMessage({
         type: "error",
         text: error.response?.data?.message || "Login failed ❌",
-      };
-      setMessage(errMsg);
-      console.log("set message", errMsg);
+      });
       console.error(error);
     } finally {
       setLoading(false);
@@ -112,7 +111,6 @@ export default function Login() {
             </p>
 
             {/* flash message */}
-            {console.log("Login render message", message)}
             {message && (
               <div
                 className={`mt-4 rounded p-3 text-sm shadow-sm border-l-4
@@ -218,13 +216,7 @@ export default function Login() {
         </div>
         <div>
           <p className="text-sm font-semibold text-slate-900">Admin</p>
-            {/* admin credential hint */}
-            {role === "Admin" && (
-              <p className="mt-2 text-xs text-slate-500">
-                <strong>Note:</strong> admin account uses fixed credentials:<br />
-                <code>shreegowda211@gmail.com</code> / <code>Admin@shree1</code>
-              </p>
-            )}
+
           <p className="text-[11px] text-slate-500">
             Platform oversight & control
           </p>
@@ -294,6 +286,19 @@ export default function Login() {
                 Register here
               </Link>
             </p>
+
+            {/* Admin Credentials Box */}
+            {role === "Admin" && (
+              <div className="mt-6 rounded-lg border border-dashed border-purple-300 bg-purple-50 px-3 py-3 text-xs text-purple-700">
+                <p className="font-semibold text-purple-900">Admin Credentials</p>
+                <p className="mt-1">
+                  📧 Email: <span className="font-mono font-semibold">shreegowda211@gmail.com</span>
+                </p>
+                <p className="mt-1">
+                  🔑 Password: <span className="font-mono font-semibold">Admin@shree1</span>
+                </p>
+              </div>
+            )}
           </form>
 
             {/* // Demo access box 
