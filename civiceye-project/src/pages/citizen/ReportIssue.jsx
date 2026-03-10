@@ -73,10 +73,11 @@ export default function ReportIssue() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Report an Issue</h1>
-          <p className="text-muted-foreground">
+      <div className="space-y-6 bg-slate-50 p-6 rounded-lg shadow-lg">
+        {/* header with gradient to match dashboards */}
+        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white">
+          <h1 className="font-heading text-3xl font-bold mb-2">Report an Issue</h1>
+          <p className="text-slate-200">
             Help us improve your city by reporting civic issues
           </p>
         </div>
@@ -91,86 +92,89 @@ export default function ReportIssue() {
           </div>
         )}
 
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Issue Details</CardTitle>
+        <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+            <CardTitle className="text-xl font-semibold">Issue Details</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium">Title *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Title *</label>
                 <input
                   type="text"
                   name="title"
                   value={form.title}
                   onChange={handleInputChange}
                   placeholder="Brief title of the issue"
-                  className="w-full text-sm rounded border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium">Description *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Description *</label>
                 <textarea
                   name="description"
                   value={form.description}
                   onChange={handleInputChange}
                   placeholder="Detailed description"
-                  rows={4}
-                  className="w-full text-sm rounded border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  rows={5}
+                  className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all resize-none"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium">Category</label>
-                <select 
-                  name="category"
-                  value={form.category}
-                  onChange={handleInputChange}
-                  className="w-full text-sm rounded border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                >
-                  <option value="Road Damage">Road Damage</option>
-                  <option value="Garbage">Garbage</option>
-                  <option value="Streetlight">Streetlight</option>
-                  <option value="Water Leakage">Water Leakage</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                  <select 
+                    name="category"
+                    value={form.category}
+                    onChange={handleInputChange}
+                    className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                  >
+                    <option value="Road Damage">Road Damage</option>
+                    <option value="Garbage">Garbage</option>
+                    <option value="Streetlight">Streetlight</option>
+                    <option value="Water Leakage">Water Leakage</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Priority</label>
+                  <select 
+                    name="priority"
+                    value={form.priority}
+                    onChange={handleInputChange}
+                    className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium">Priority</label>
-                <select 
-                  name="priority"
-                  value={form.priority}
-                  onChange={handleInputChange}
-                  className="w-full text-sm rounded border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">Location *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Location *</label>
                 <input
                   type="text"
                   name="location"
                   value={form.location}
                   onChange={handleInputChange}
                   placeholder="Address or location details"
-                  className="w-full text-sm rounded border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
                   required
                 />
               </div>
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-4 pt-6 border-t border-slate-200">
                 <Button 
                   variant="civic" 
                   type="submit"
                   disabled={loading}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
                 >
                   {loading ? 'Submitting...' : 'Submit Report'}
                 </Button>
@@ -179,6 +183,7 @@ export default function ReportIssue() {
                   type="button"
                   onClick={handleCancel}
                   disabled={loading}
+                  className="px-6 py-3 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg transition-all"
                 >
                   Cancel
                 </Button>

@@ -67,43 +67,65 @@ export default function OfficerDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Welcome, {user?.name}!</h1>
-          <p className="text-muted-foreground">
-            Manage assigned issues and update their status
-          </p>
+      <div className="space-y-8 bg-slate-50 p-6 rounded-lg shadow-lg">
+        {/* Welcome Header */}
+        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white">
+          <div>
+            <h1 className="font-heading text-3xl font-bold mb-2">
+              Welcome, {user?.name}! 👮
+            </h1>
+            <p className="text-slate-200">
+              Manage assigned issues and update their status
+            </p>
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Assigned Issues"
-            value={assignedCount}
-            icon={<ClipboardList className="h-6 w-6 text-blue-600" />}
-          />
-          <StatsCard
-            title="Pending"
-            value={pendingCount}
-            icon={<AlertTriangle className="h-6 w-6 text-red-600" />}
-          />
-          <StatsCard
-            title="In Progress"
-            value={inProgressCount}
-            icon={<ClipboardList className="h-6 w-6 text-yellow-600" />}
-            variant="warning"
-          />
-          <StatsCard
-            title="Resolved"
-            value={resolvedCount}
-            icon={<CheckSquare className="h-6 w-6 text-green-600" />}
-            variant="success"
-          />
+          <div className="bg-white border-l-4 border-blue-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-semibold mb-1">Assigned Issues</p>
+                <p className="text-3xl font-bold text-slate-900">{assignedCount}</p>
+              </div>
+              <ClipboardList className="h-10 w-10 text-blue-500 opacity-50" />
+            </div>
+          </div>
+          
+          <div className="bg-white border-l-4 border-red-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-semibold mb-1">Pending</p>
+                <p className="text-3xl font-bold text-slate-900">{pendingCount}</p>
+              </div>
+              <AlertTriangle className="h-10 w-10 text-red-500 opacity-50" />
+            </div>
+          </div>
+
+          <div className="bg-white border-l-4 border-amber-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-semibold mb-1">In Progress</p>
+                <p className="text-3xl font-bold text-slate-900">{inProgressCount}</p>
+              </div>
+              <ClipboardList className="h-10 w-10 text-amber-500 opacity-50" />
+            </div>
+          </div>
+
+          <div className="bg-white border-l-4 border-emerald-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-semibold mb-1">Resolved</p>
+                <p className="text-3xl font-bold text-slate-900">{resolvedCount}</p>
+              </div>
+              <CheckSquare className="h-10 w-10 text-emerald-500 opacity-50" />
+            </div>
+          </div>
         </div>
 
         {/* Assigned Issues Table */}
-        <Card className="shadow-card">
-          <CardHeader>
+        <Card className="shadow-lg border-0">
+          <CardHeader className="bg-slate-700 text-white rounded-t-lg">
             <CardTitle>Assigned Issues</CardTitle>
           </CardHeader>
           <CardContent>
@@ -147,7 +169,7 @@ export default function OfficerDashboard() {
                               setSelectedComplaint(complaint);
                               setNewStatus(complaint.status);
                             }}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 border-slate-300 text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 font-semibold px-4 py-2 rounded-lg transition-all"
                           >
                             <Edit2 className="h-4 w-4" />
                             Update
@@ -165,41 +187,45 @@ export default function OfficerDashboard() {
         {/* Update Status Modal */}
         {selectedComplaint && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle>Update Issue Status</CardTitle>
-                <button
-                  onClick={() => {
-                    setSelectedComplaint(null);
-                    setNewStatus('');
-                  }}
-                  className="rounded-md p-1 hover:bg-slate-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+            <Card className="w-full max-w-md shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-t-xl">
+                <div className="flex flex-row items-center justify-between space-y-0 pb-0">
+                  <CardTitle className="text-xl font-semibold">Update Issue Status</CardTitle>
+                  <button
+                    onClick={() => {
+                      setSelectedComplaint(null);
+                      setNewStatus('');
+                    }}
+                    className="rounded-md p-2 hover:bg-white/20 transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Issue ID</label>
-                  <p className="font-mono font-semibold text-blue-600">{selectedComplaint.issueId}</p>
+              <CardContent className="p-8 space-y-6">
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700">Issue ID</label>
+                  <p className="font-mono font-semibold text-blue-600 bg-slate-50 px-3 py-2 rounded-lg">{selectedComplaint.issueId}</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title</label>
-                  <p className="font-medium">{selectedComplaint.title}</p>
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700">Title</label>
+                  <p className="font-medium text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedComplaint.title}</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Current Status</label>
-                  <StatusBadge status={selectedComplaint.status} />
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700">Current Status</label>
+                  <div className="bg-slate-50 px-3 py-2 rounded-lg">
+                    <StatusBadge status={selectedComplaint.status} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="status-select" className="text-sm font-medium">
+                <div className="space-y-3">
+                  <label htmlFor="status-select" className="text-sm font-semibold text-slate-700">
                     New Status
                   </label>
                   <select
                     id="status-select"
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-white text-slate-900 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                   >
                     <option value="">Select status...</option>
                     <option value="Pending">Pending</option>
@@ -208,11 +234,11 @@ export default function OfficerDashboard() {
                     <option value="Rejected">Rejected</option>
                   </select>
                 </div>
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-4 pt-6">
                   <Button
                     onClick={handleUpdateStatus}
                     disabled={!newStatus || updateStatusMutation.isPending}
-                    className="flex-1"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updateStatusMutation.isPending ? 'Updating...' : 'Update Status'}
                   </Button>
@@ -222,13 +248,13 @@ export default function OfficerDashboard() {
                       setSelectedComplaint(null);
                       setNewStatus('');
                     }}
-                    className="flex-1"
+                    className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold px-6 py-3 rounded-lg transition-all"
                   >
                     Cancel
                   </Button>
                 </div>
                 {updateStatusMutation.isError && (
-                  <p className="text-sm text-red-600">Error updating status. Please try again.</p>
+                  <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">Error updating status. Please try again.</p>
                 )}
               </CardContent>
             </Card>

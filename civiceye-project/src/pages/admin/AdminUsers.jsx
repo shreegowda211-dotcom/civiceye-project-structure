@@ -58,22 +58,27 @@ export default function AdminUsers() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">
-            View and manage citizens and officers on the platform
-          </p>
+      <div className="space-y-8 bg-slate-50 p-6 rounded-lg shadow-lg">
+        {/* Welcome Header */}
+        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white">
+          <div>
+            <h1 className="font-heading text-3xl font-bold mb-2">
+              User Management 👥
+            </h1>
+            <p className="text-slate-200">
+              View and manage citizens and officers on the platform
+            </p>
+          </div>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex gap-4 border-b border-slate-200">
           <button
             onClick={() => setActiveTab('citizens')}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+            className={`px-6 py-3 font-semibold border-b-2 transition-all rounded-t-lg ${
               activeTab === 'citizens'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -83,10 +88,10 @@ export default function AdminUsers() {
           </button>
           <button
             onClick={() => setActiveTab('officers')}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+            className={`px-6 py-3 font-semibold border-b-2 transition-all rounded-t-lg ${
               activeTab === 'officers'
-                ? 'border-green-600 text-green-600'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -98,123 +103,191 @@ export default function AdminUsers() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+            <CardContent className="py-12">
+              <div className="flex justify-center items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                <p className="text-slate-600 font-medium">Loading users...</p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Users Table */}
         {!isLoading && (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border border-slate-200">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">Role</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">Joined</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-slate-700">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayData.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-slate-500">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        {activeTab === 'citizens' ? (
-                          <>
-                            <Users className="h-12 w-12 text-slate-300" />
-                            <p>No citizens registered yet</p>
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="h-12 w-12 text-slate-300" />
-                            <p>No officers registered yet</p>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  displayData.map((user) => (
-                    <tr key={user._id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{user.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-slate-400" />
-                          {user.email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          activeTab === 'citizens'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-slate-400" />
-                          {formatDate(user.createdAt)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button 
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
-                          title="Delete user"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
+          <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-800 text-white rounded-t-xl">
+              <CardTitle className="text-xl font-semibold">
+                {activeTab === 'citizens' ? 'Citizens' : 'Officers'} Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-slate-200 bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-4 text-left font-semibold text-slate-700">Name</th>
+                      <th className="px-6 py-4 text-left font-semibold text-slate-700">Email</th>
+                      <th className="px-6 py-4 text-left font-semibold text-slate-700">Role</th>
+                      <th className="px-6 py-4 text-left font-semibold text-slate-700">Joined</th>
+                      <th className="px-6 py-4 text-center font-semibold text-slate-700">Action</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {displayData.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center gap-4">
+                            {activeTab === 'citizens' ? (
+                              <>
+                                <Users className="h-16 w-16 text-slate-300" />
+                                <p className="text-slate-600 text-lg">No citizens registered yet</p>
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="h-16 w-16 text-slate-300" />
+                                <p className="text-slate-600 text-lg">No officers registered yet</p>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      displayData.map((user) => (
+                        <tr key={user._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900">{user.name}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-slate-400" />
+                              {user.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              activeTab === 'citizens'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-500">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-slate-400" />
+                              {formatDate(user.createdAt)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all border border-transparent hover:border-red-200"
+                              title="Delete user"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Summary Cards */}
-        <div className="grid md:grid-cols-2 gap-4 mt-8">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                Citizens Summary
+        <div className="grid md:grid-cols-2 gap-6 mt-8">
+          {/* Citizens Summary */}
+          <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-xl">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <Users className="h-6 w-6" />
+                Citizens Overview
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li>✓ Total Citizens: <span className="font-bold">{citizensData.length}</span></li>
-                <li>✓ Active: <span className="font-bold">{citizensData.length}</span></li>
-                <li>✓ Joined this month: <span className="font-bold">{citizensData.filter((c) => {
-                  const joinDate = new Date(c.createdAt);
-                  const now = new Date();
-                  return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
-                }).length}</span></li>
-              </ul>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm font-semibold mb-1">Total Citizens</p>
+                      <p className="text-2xl font-bold text-slate-900">{citizensData.length}</p>
+                    </div>
+                    <Users className="h-8 w-8 text-blue-500 opacity-60" />
+                  </div>
+                </div>
+
+                <div className="bg-white border-l-4 border-green-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm font-semibold mb-1">Active Citizens</p>
+                      <p className="text-2xl font-bold text-slate-900">{citizensData.length}</p>
+                    </div>
+                    <UserCheck className="h-8 w-8 text-green-500 opacity-60" />
+                  </div>
+                </div>
+
+                <div className="bg-white border-l-4 border-emerald-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm font-semibold mb-1">Joined This Month</p>
+                      <p className="text-2xl font-bold text-slate-900">{citizensData.filter((c) => {
+                        const joinDate = new Date(c.createdAt);
+                        const now = new Date();
+                        return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
+                      }).length}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-emerald-500 opacity-60" />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-green-600" />
-                Officers Summary
+          {/* Officers Summary */}
+          <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-xl">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <UserCheck className="h-6 w-6" />
+                Officers Overview
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li>✓ Total Officers: <span className="font-bold">{officersData.length}</span></li>
-                <li>✓ Active: <span className="font-bold">{officersData.length}</span></li>
-                <li>✓ Joined this month: <span className="font-bold">{officersData.filter((o) => {
-                  const joinDate = new Date(o.createdAt);
-                  const now = new Date();
-                  return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
-                }).length}</span></li>
-              </ul>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-white border-l-4 border-green-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm font-semibold mb-1">Total Officers</p>
+                      <p className="text-2xl font-bold text-slate-900">{officersData.length}</p>
+                    </div>
+                    <UserCheck className="h-8 w-8 text-green-500 opacity-60" />
+                  </div>
+                </div>
+
+                <div className="bg-white border-l-4 border-emerald-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm font-semibold mb-1">Active Officers</p>
+                      <p className="text-2xl font-bold text-slate-900">{officersData.length}</p>
+                    </div>
+                    <Users className="h-8 w-8 text-emerald-500 opacity-60" />
+                  </div>
+                </div>
+
+                <div className="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-slate-600 text-sm font-semibold mb-1">Joined This Month</p>
+                      <p className="text-2xl font-bold text-slate-900">{officersData.filter((o) => {
+                        const joinDate = new Date(o.createdAt);
+                        const now = new Date();
+                        return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
+                      }).length}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-blue-500 opacity-60" />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

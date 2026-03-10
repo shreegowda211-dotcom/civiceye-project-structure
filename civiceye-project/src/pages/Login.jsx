@@ -51,6 +51,7 @@ export default function Login() {
         name: user.name || user.email,
         email: user.email,
         role: user.role || role.toLowerCase(),
+        department: user.department || "", // Add department to user context
         token: res.data.token,
       });
 

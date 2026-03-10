@@ -12,6 +12,7 @@ export default function Register() {
     email: "",
     password: "",
     confirmPassword: "",
+    department: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -22,8 +23,15 @@ export default function Register() {
   };
 
   const validateForm = () => {
+    console.log("✓ Validating form:", { form, role });
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       setMessage({ type: "error", text: "All fields are required" });
+      return false;
+    }
+
+    if (role === "Officer" && !form.department) {
+      console.log("❌ Department value:", form.department);
+      setMessage({ type: "error", text: "Please select a department" });
       return false;
     }
 
@@ -51,10 +59,13 @@ export default function Register() {
       try {
         // Try role-specific registration
         if (role.toLowerCase() === "citizen") {
+          console.log("📝 Sending citizen registration:", form);
           res = await authAPI.registerCitizen(form);
         } else if (role.toLowerCase() === "officer") {
+          console.log("👮 Sending officer registration:", form);
           res = await authAPI.registerOfficer(form);
         } else {
+          console.log("📋 Sending generic registration:", { ...form, role });
           res = await authAPI.register({ ...form, role });
         }
       } catch (err) {
@@ -67,7 +78,7 @@ export default function Register() {
       setMessage({ type: "success", text: "Registration successful ✅" });
       console.log("register response:", res.data);
 
-      setForm({ name: "", email: "", password: "", confirmPassword: "" });
+      setForm({ name: "", email: "", password: "", confirmPassword: "", department: "" });
       setRole("Citizen");
 
       // Navigate to Login page after 2 seconds
@@ -75,10 +86,13 @@ export default function Register() {
         navigate("/login");
       }, 2000);
     } catch (err) {
-      console.error(err);
+      console.error("❌ Registration failed:", err);
+      const errorMsg = err.response?.data?.message || 
+                       err.message || 
+                       "Registration failed. Please try again.";
       setMessage({
         type: "error",
-        text: err.response?.data?.message || "Registration failed ❌",
+        text: errorMsg,
       });
     } finally {
       setLoading(false);
@@ -203,7 +217,7 @@ export default function Register() {
 
               <div className="mt-4 space-y-1.5">
                 <label 
-                 htmlFor="confirmPassword" 
+                htmlFor="confirmPassword" 
                  className="block text-xs font-medium text-slate-700">
                   Confirm Password
                 </label>
@@ -216,6 +230,30 @@ export default function Register() {
                  placeholder="Confirm your password"
                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
               </div>
+
+              {role === 'Officer' && (
+                <div className="mt-4 space-y-1.5">
+                  <label 
+                   htmlFor="department" 
+                   className="block text-xs font-medium text-slate-700">
+                    Department *
+                  </label>
+                  
+                  <select 
+                   id="department" 
+                   value={form.department} 
+                   onChange={handleChange} 
+                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                    <option value="">Select a department...</option>
+                    <option value="Road Damage">Road Damage</option>
+                    <option value="Garbage">Garbage</option>
+                    <option value="Streetlight">Streetlight</option>
+                    <option value="Water Leakage">Water Leakage</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <p className="text-xs text-slate-500 mt-1">Select the category of issues you will handle</p>
+                </div>
+              )}
 
               <button 
                type="submit" 

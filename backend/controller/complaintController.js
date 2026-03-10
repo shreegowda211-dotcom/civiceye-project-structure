@@ -207,46 +207,67 @@ export const getAllComplaints = async (req, res) => {
 
 export const getComplaintsForOfficer = async (req, res) => {
   try {
+    console.log("\n👮 GET COMPLAINTS FOR OFFICER");
+    console.log("   📋 Full req.officer object:", req.officer);
+    
     const officerId = req.officer?.id || req.officer?._id;
+    console.log("   🆔 Officer ID extracted:", officerId);
     
-    console.log("👮 Fetching complaints for officer:", officerId);
+    if (!officerId) {
+      console.log("   ❌ No officer ID found in token");
+      return res.status(400).json({
+        message: "No officer ID in token",
+        error: "Missing officer identification"
+      });
+    }
 
+    console.log("   🔍 Looking up officer with ID:", officerId);
     // Get officer details to know their department
-    const officer = await Officer.findById(officerId);
+    const officerData = await Officer.findById(officerId);
+    console.log("   ✅ Officer lookup completed");
     
-    if (!officer) {
-      console.log("❌ Officer not found");
+    if (!officerData) {
+      console.log("   ❌ Officer not found in database");
       return res.status(404).json({
         message: "Officer not found",
         error: "Officer details not found"
       });
     }
 
-    console.log("📂 Officer department:", officer.department);
+    console.log("   ✅ Officer found:", officerData._id);
+    console.log("   📝 Officer name:", officerData.name);
+    console.log("   📂 Officer department:", officerData.department);
 
-    // Get all complaints in this officer's department
-    const complaints = await Complaint.find({ category: officer.department })
+    // Get all complaints assigned to this officer's department (category)
+    console.log("   🔎 Searching for complaints with category:", officerData.department);
+    const complaints = await Complaint.find({ category: officerData.department })
       .populate('citizen', 'name email')
       .populate('assignedOfficer', 'name email department')
       .sort({ createdAt: -1 });
 
-    console.log("✅ Found", complaints.length, "complaints for department:", officer.department);
+    console.log("   ✅ Found", complaints.length, "complaints for department:", officerData.department);
 
     res.status(200).json({
       message: "Officer complaints retrieved successfully",
       officer: {
-        name: officer.name,
-        email: officer.email,
-        department: officer.department
+        name: officerData.name,
+        email: officerData.email,
+        department: officerData.department
       },
       complaints
     });
 
   } catch (error) {
-    console.error("❌ Error retrieving officer complaints:", error);
+    console.error("\n❌ ERROR RETRIEVING OFFICER COMPLAINTS");
+    console.error("   Error type:", error.constructor.name);
+    console.error("   Error message:", error.message);
+    console.error("   Error stack:", error.stack);
+    console.error("   Full error:", error);
+    
     res.status(500).json({
       message: "Error retrieving complaints",
-      error: error.message
+      error: error.message,
+      errorType: error.constructor.name
     });
   }
 };
@@ -276,30 +297,54 @@ export const updateComplaintStatus = async (req, res) => {
     // Find complaint by issueId or _id
     const searchQuery = {
       $or: [
-        { issueId: complaintId.toUpperCase() }
+        { issueId: complaintId.toUpperCase() },
+        { _id: complaintId }
       ]
     };
 
+    // Try to parse as MongoDB ObjectId if not issueId
     try {
       const mongoId = new mongoose.Types.ObjectId(complaintId);
-      searchQuery.$or.push({ _id: mongoId });
+      if (!searchQuery.$or.find(q => q._id)) {
+        searchQuery.$or.push({ _id: mongoId });
+      }
     } catch (e) {
-      // Not a valid ObjectId
+      // Not a valid ObjectId, continue with issueId search
     }
 
-    const complaint = await Complaint.findOne(searchQuery);
+    const complaint = await Complaint.findOne(searchQuery)
+      .populate('citizen', 'name email')
+      .populate('assignedOfficer', 'name email');
 
     if (!complaint) {
+      console.log("❌ Complaint not found");
       return res.status(404).json({
         message: "Complaint not found",
         error: "No complaint with this ID"
       });
     }
 
-    // Update status and assign officer
+    // Get officer's department
+    const officer = await Officer.findById(officerId);
+    if (!officer) {
+      return res.status(404).json({
+        message: "Officer not found",
+        error: "Could not find officer details"
+      });
+    }
+
+    // Check if complaint belongs to officer's department
+    if (complaint.category !== officer.department) {
+      console.log("❌ Unauthorized - complaint not in officer's department");
+      return res.status(403).json({
+        message: "Unauthorized",
+        error: "This complaint is not in your department"
+      });
+    }
+
+    // Update the complaint status
     complaint.status = status;
-    complaint.assignedOfficer = officerId;
-    
+    complaint.assignedOfficer = officerId; // Assign to updating officer
     const updatedComplaint = await complaint.save();
 
     console.log("✅ Complaint status updated to:", status);

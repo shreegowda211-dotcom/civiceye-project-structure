@@ -4,7 +4,7 @@ import { CITIZEN_KEY, OFFICER_KEY, ADMIN_KEY } from "../config.js";
 const verifyCitizenToken = async (req, res, next) => {
     let token = req.header("auth-token");
     if (!token) {
-        return res.json({
+        return res.status(401).json({
             success: false,
             message: "Please authenticate using valid token",
         });
@@ -16,7 +16,7 @@ const verifyCitizenToken = async (req, res, next) => {
         return next();
     }
     catch (error){
-        return res.json({
+        return res.status(401).json({
             success:false,
             message:"Invalid or expired token"
         });
@@ -26,7 +26,7 @@ const verifyCitizenToken = async (req, res, next) => {
 const verifyOfficerToken = async (req, res, next) => {
     let token = req.header("auth-token");
     if (!token) {
-        return res.json({
+        return res.status(401).json({
             success: false,
             message: "Please authenticate using valid token",
         });
@@ -38,7 +38,7 @@ const verifyOfficerToken = async (req, res, next) => {
         return next();
     }
     catch (error){
-        return res.json({
+        return res.status(401).json({
             success:false,
             message:"Invalid or expired token"
         });

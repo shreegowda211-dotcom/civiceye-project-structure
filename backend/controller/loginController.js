@@ -106,13 +106,18 @@ export const getProfile = async (req, res) => {
 
 export const officerLogin = async (req, res) => {
   try {
+    console.log("\n👮 OFFICER LOGIN ATTEMPT");
     const { email, password } = req.body;
+    console.log("   📧 Email received:", email);
+    console.log("   🔑 Password received:", password ? "YES (length: " + password.length + ")" : "NO");
 
     // #1 Trim and lowercase email
     const trimmedEmail = email?.trim().toLowerCase();
+    console.log("   📧 Trimmed email:", trimmedEmail);
 
     // #2 Check required fields
     if (!trimmedEmail || !password) {
+      console.log("   ❌ Missing required fields");
       return res.status(400).json({
         success: false,
         message: "Email and password are required",
@@ -120,26 +125,37 @@ export const officerLogin = async (req, res) => {
     }
 
     // #3 Find officer by email
+    console.log("   🔍 Searching for officer with email:", trimmedEmail);
     const findOfficer = await officer.findOne({ email: trimmedEmail });
 
     if (!findOfficer) {
+      console.log("   ❌ Officer not found in database");
       return res.status(404).json({
         success: false,
         message: "Officer not found",
       });
     }
+    console.log("   ✅ Officer found:", findOfficer._id);
+    console.log("   📝 Officer name:", findOfficer.name);
+    console.log("   🏢 Officer department:", findOfficer.department);
 
     // #4 Compare password
+    console.log("   🔐 Comparing passwords...");
+    console.log("   📝 Stored hash length:", findOfficer.password ? findOfficer.password.length : "NO HASH");
     const comparePassword = await bcrypt.compare(password, findOfficer.password);
+    console.log("   ✅ Password comparison result:", comparePassword);
 
     if (!comparePassword) {
+      console.log("   ❌ PASSWORD MISMATCH - Login failed");
       return res.status(401).json({
         success: false,
         message: "Invalid password",
       });
     }
+    console.log("   ✅ Password matched successfully");
 
     // #5 Generate JWT token with 1-day expiry
+    console.log("   🔑 Generating JWT token...");
     const token = jwt.sign(
       {
         id: findOfficer._id,
@@ -149,8 +165,10 @@ export const officerLogin = async (req, res) => {
       OFFICER_KEY,
       { expiresIn: "1d" }
     );
+    console.log("   ✅ Token generated successfully");
 
-    // #6 Send success response with user metadata
+    // #6 Send success response with user metadata and department
+    console.log("   ✅ OFFICER LOGIN COMPLETED SUCCESSFULLY\n");
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -160,6 +178,7 @@ export const officerLogin = async (req, res) => {
         email: findOfficer.email,
         name: findOfficer.name || findOfficer.email,
         role: findOfficer.role,
+        department: findOfficer.department,
       },
     });
 

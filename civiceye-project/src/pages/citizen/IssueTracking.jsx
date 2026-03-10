@@ -93,81 +93,84 @@ export default function IssueTracking() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Track Your Issue</h1>
-            <p className="text-muted-foreground">
-              Enter an issue ID to view its current status and updates
-            </p>
+      <div className="space-y-6 bg-slate-50 p-6 rounded-lg shadow-lg">
+        {/* header with gradient like dashboards */}
+        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-heading text-3xl font-bold mb-2">Track Your Issue</h1>
+              <p className="text-slate-200">
+                Enter an issue ID to view its current status and updates
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/citizen')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/citizen')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
         </div>
 
         {/* Search Form */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
               <Search className="h-5 w-5" />
               Search Issue by ID
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSearch} className="flex gap-2">
+          <CardContent className="p-8">
+            <form onSubmit={handleSearch} className="flex gap-3">
               <input
                 type="text"
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
                 placeholder="e.g., ISS26001, ISS26002..."
                 title="Copy your issue ID (e.g., ISS26001)"
-                className="flex-1 rounded border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
               />
               <Button
                 type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
               >
                 Search
               </Button>
             </form>
-            <p className="text-xs text-slate-500 mt-2">
-              💡 Your issue ID appears in the format: <span className="font-mono bg-slate-100 px-2 py-1 rounded">ISS26001</span>
+            <p className="text-sm text-slate-600 mt-4">
+              💡 Your issue ID appears in the format: <span className="font-mono bg-slate-100 px-3 py-1 rounded-lg text-slate-700">ISS26001</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Issue Details */}
         {isLoading && (
-          <Card className="shadow-card">
+          <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
             <CardContent className="py-12">
               <div className="flex justify-center items-center gap-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-                <p className="text-slate-600">Loading issue details...</p>
+                <p className="text-slate-600 font-medium">Loading issue details...</p>
               </div>
             </CardContent>
           </Card>
         )}
 
         {isError && (
-          <Card className="shadow-card border border-red-200 bg-red-50">
-            <CardContent className="py-6">
+          <Card className="shadow-lg border border-red-200 bg-red-50 rounded-xl overflow-hidden">
+            <CardContent className="py-8 px-8">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-semibold text-red-900">Error Loading Issue</p>
-                  <p className="text-sm text-red-700 mt-1">
+                  <p className="font-semibold text-red-900 text-lg mb-2">Error Loading Issue</p>
+                  <p className="text-sm text-red-700 mb-4">
                     {error?.response?.data?.message || error?.message || 'Failed to load issue'}
                   </p>
-                  <p className="text-xs text-red-600 mt-2">
-                    💡 <strong>Troubleshooting:</strong>
+                  <p className="text-sm text-red-600 mb-4">
+                    <strong>Troubleshooting:</strong>
                   </p>
-                  <ul className="text-xs text-red-600 mt-1 space-y-1 ml-4 list-disc">
+                  <ul className="text-sm text-red-600 mb-6 space-y-1 ml-4 list-disc">
                     <li>Make sure you copied the full issue ID (e.g., ISS26001)</li>
                     <li>Check if you have permission to view this issue</li>
                     <li>Try searching from the "My Issues" page for accurate ID</li>
@@ -175,7 +178,7 @@ export default function IssueTracking() {
                   <Button
                     variant="outline"
                     onClick={() => navigate('/citizen/issues')}
-                    className="mt-4"
+                    className="border-red-300 text-red-700 hover:bg-red-100"
                   >
                     Go to My Issues
                   </Button>
@@ -188,12 +191,12 @@ export default function IssueTracking() {
         {!isLoading && !isError && complaint && (
           <div className="space-y-6">
             {/* Status Overview */}
-            <Card className="shadow-card border-l-4 border-emerald-600">
-              <CardHeader className="pb-4">
+            <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden border-l-4 border-emerald-600">
+              <CardHeader className="pb-6 bg-gradient-to-r from-emerald-50 to-emerald-100">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded font-mono">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-lg font-mono">
                         {complaint.issueId || `#${complaint._id?.slice(-6) || 'N/A'}`}
                       </span>
                       <StatusBadge status={complaint.status} />
@@ -203,7 +206,7 @@ export default function IssueTracking() {
                       {complaint.title}
                     </h2>
                   </div>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-100">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-emerald-100">
                     {getStatusIcon(complaint.status)}
                   </div>
                 </div>
@@ -213,16 +216,16 @@ export default function IssueTracking() {
             {/* Issue Details Grid */}
             <div className="grid md:grid-cols-2 gap-6">
               {/* Left Column */}
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">Issue Details</CardTitle>
+              <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <CardTitle className="text-lg font-semibold">Issue Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-6 space-y-4">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                    <p className="text-sm font-semibold text-slate-700 uppercase mb-2">
                       Description
                     </p>
-                    <p className="text-sm text-slate-700 leading-relaxed">
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       {complaint.description}
                     </p>
                   </div>
@@ -231,10 +234,10 @@ export default function IssueTracking() {
                     <div className="flex items-start gap-3">
                       <MapPin className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase">
+                        <p className="text-sm font-semibold text-slate-700 uppercase">
                           Location
                         </p>
-                        <p className="text-sm text-slate-700">
+                        <p className="text-sm text-slate-600">
                           {complaint.location}
                         </p>
                       </div>
@@ -243,7 +246,7 @@ export default function IssueTracking() {
                     <div className="flex items-start gap-3">
                       <ClipboardList className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase">
+                        <p className="text-sm font-semibold text-slate-700 uppercase">
                           Category
                         </p>
                         <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded text-xs font-medium mt-1">
@@ -270,12 +273,12 @@ export default function IssueTracking() {
               {/* Right Column */}
               <div className="space-y-6">
                 {/* Status Timeline */}
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Status Timeline</CardTitle>
+                <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                    <CardTitle className="text-lg font-semibold">Status Timeline</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
                       <div className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <div className="h-4 w-4 rounded-full bg-emerald-600"></div>
@@ -285,7 +288,7 @@ export default function IssueTracking() {
                           <p className="font-semibold text-slate-900">
                             Issue Created
                           </p>
-                          <p className="text-sm text-slate-500">
+                          <p className="text-sm text-slate-600">
                             {formatDate(complaint.createdAt)}
                           </p>
                         </div>
@@ -341,10 +344,11 @@ export default function IssueTracking() {
 
                 {/* Assigned Officer */}
                 {complaint.assignedOfficer ? (
-                  <Card className="shadow-card bg-blue-50 border border-blue-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                  <Card className="shadow-lg border-0 bg-blue-50 border border-blue-200 rounded-xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
                         <User className="h-5 w-5" />
+                        Assigned Officer
                         Assigned Officer
                       </CardTitle>
                     </CardHeader>
@@ -363,14 +367,14 @@ export default function IssueTracking() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card className="shadow-card bg-yellow-50 border border-yellow-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="h-5 w-5 text-yellow-600" />
+                  <Card className="shadow-lg border-0 bg-yellow-50 border border-yellow-200 rounded-xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-yellow-600 to-yellow-700 text-white">
+                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                        <User className="h-5 w-5" />
                         Assigned Officer
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6">
                       <p className="text-sm text-slate-700">
                         No officer assigned yet. Your complaint is under review.
                       </p>
@@ -381,17 +385,17 @@ export default function IssueTracking() {
             </div>
 
             {/* Submission Info */}
-            <Card className="shadow-card bg-slate-50">
-              <CardContent className="pt-6">
+            <Card className="shadow-lg border-0 bg-slate-50 rounded-xl overflow-hidden">
+              <CardContent className="p-6">
                 <div className="grid md:grid-cols-2 gap-6 text-sm">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                    <p className="text-sm font-semibold text-slate-700 uppercase mb-2">
                       Submitted
                     </p>
-                    <p className="text-slate-700">{formatDate(complaint.createdAt)}</p>
+                    <p className="text-slate-600">{formatDate(complaint.createdAt)}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                    <p className="text-sm font-semibold text-slate-700 uppercase mb-2">
                       Last Updated
                     </p>
                     <p className="text-slate-700">{formatDate(complaint.updatedAt)}</p>
