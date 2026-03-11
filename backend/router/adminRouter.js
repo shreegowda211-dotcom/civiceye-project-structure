@@ -1,5 +1,5 @@
 import express from 'express';
-import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers } from '../controller/loginController.js';
+import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers, createOfficer } from '../controller/loginController.js';
 import { getAllComplaints } from '../controller/complaintController.js';
 import { verifyAdminToken } from '../middleware/authAdmin.js';
 
@@ -15,5 +15,6 @@ router.get('/complaints', verifyAdminToken, getAllComplaints);
 // User management routes for admin
 router.get('/citizens', verifyAdminToken, getAllCitizens);
 router.get('/officers', verifyAdminToken, getAllOfficers);
+router.post('/officers', verifyAdminToken, createOfficer);
 
 export default router;

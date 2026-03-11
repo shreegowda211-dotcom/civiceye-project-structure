@@ -376,3 +376,88 @@ export const getAllOfficers = async (req, res) => {
     });
   }
 };
+
+// ===============================
+// ➕ Create Officer (By Admin)
+// ===============================
+
+export const createOfficer = async (req, res) => {
+  try {
+    const { name, email, password, department } = req.body;
+
+    // #1 Validate required fields
+    if (!name || !email || !password || !department) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields (name, email, password, department) are required",
+      });
+    }
+
+    // #2 Trim and lowercase email
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // #3 Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
+    // #4 Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // #5 Validate department
+    const validDepartments = ["Road Damage", "Garbage", "Streetlight", "Water Leakage", "Other"];
+    if (!validDepartments.includes(department)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid department. Must be one of: " + validDepartments.join(", "),
+      });
+    }
+
+    // #6 Check if officer with this email already exists
+    const existingOfficer = await officer.findOne({ email: trimmedEmail });
+    if (existingOfficer) {
+      return res.status(409).json({
+        success: false,
+        message: "Officer with this email already exists",
+      });
+    }
+
+    // #7 Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // #8 Create new officer
+    const newOfficer = await officer.create({
+      name,
+      email: trimmedEmail,
+      password: hashedPassword,
+      role: "Officer",
+      department,
+    });
+
+    // #9 Return response without password
+    const officerData = newOfficer.toObject();
+    delete officerData.password;
+
+    res.status(201).json({
+      success: true,
+      message: "Officer created successfully",
+      data: officerData,
+    });
+
+  } catch (error) {
+    console.error("Error creating officer:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating officer. Please try again later.",
+    });
+  }
+};

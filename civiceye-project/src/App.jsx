@@ -21,6 +21,7 @@ import OfficerDashboard from "./pages/officer/OfficerDashboard";
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AddOfficer from "./pages/admin/AddOfficer";
 import TransparencyDashboard from "./pages/admin/TransparencyDashboard";
 
 const queryClient = new QueryClient();
@@ -169,6 +170,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/add-officer"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AddOfficer />
           </ProtectedRoute>
         }
       />

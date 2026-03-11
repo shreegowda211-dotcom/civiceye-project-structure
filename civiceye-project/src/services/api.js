@@ -86,6 +86,15 @@ export const officerAPI = {
 export const adminAPI = {
   // Get all complaints for platform statistics
   getAllComplaints: () => apiClient.get('/admin/complaints'),
+  
+  // Get all citizens
+  getAllCitizens: () => apiClient.get('/admin/citizens'),
+  
+  // Get all officers
+  getAllOfficers: () => apiClient.get('/admin/officers'),
+  
+  // Create new officer
+  createOfficer: (data) => apiClient.post('/admin/officers', data),
 };
 
 // ======================================

@@ -50,6 +50,15 @@ app.use((req, res, next) => {
     console.log(`   🔐 Auth-Token: ${req.header("auth-token") ? "Present" : "Missing"}`);
   }
 
+  // Log officer creation requests
+  if (req.path.includes("/officers") && req.method === "POST") {
+    console.log(`   👮 OFFICER CREATION ATTEMPT`);
+    console.log(`   👤 Name: ${req.body.name || "Not provided"}`);
+    console.log(`   📧 Email: ${req.body.email || "Not provided"}`);
+    console.log(`   🏢 Department: ${req.body.department || "Not provided"}`);
+    console.log(`   🔐 Auth-Token: ${req.header("auth-token") ? "Present" : "Missing"}`);
+  }
+
   // Log complaint requests
   if (req.path.includes("/complaints") && req.method === "POST") {
     console.log(`   📝 COMPLAINT CREATION ATTEMPT`);
@@ -68,6 +77,13 @@ app.use((req, res, next) => {
     if (req.path.includes("/register") || req.path.includes("/login") || req.path.includes("/profile")) {
       if (data.success) {
         console.log(`   ✔️ SUCCESS: ${data.message}`);
+      } else {
+        console.log(`   ❌ FAILED: ${data.message}`);
+      }
+    }
+    if (req.path.includes("/officers") && req.method === "POST") {
+      if (data.success) {
+        console.log(`   ✔️ SUCCESS: Officer created - ${data.data?._id}`);
       } else {
         console.log(`   ❌ FAILED: ${data.message}`);
       }

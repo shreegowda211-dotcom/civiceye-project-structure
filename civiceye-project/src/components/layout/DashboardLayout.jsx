@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "./Header";
 import {
@@ -13,11 +13,11 @@ import {
   Settings,
   Menu,
   X,
+  Plus,
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Determine role from authenticated user
@@ -39,6 +39,7 @@ export default function DashboardLayout({ children }) {
 
   const adminNavItems = [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", path: "/admin" },
+    { icon: <Plus className="h-5 w-5" />, label: "Add Officer", path: "/admin/add-officer" },
     { icon: <BarChart3 className="h-5 w-5" />, label: "Analytics", path: "/admin/analytics" },
     { icon: <ClipboardList className="h-5 w-5" />, label: "All Issues", path: "/admin/issues" },
     { icon: <Users className="h-5 w-5" />, label: "Users", path: "/admin/users" },

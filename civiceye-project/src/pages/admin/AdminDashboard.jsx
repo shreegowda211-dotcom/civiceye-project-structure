@@ -2,10 +2,9 @@ import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatsCard } from '@/components/common/StatsCard';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '@/services/api';
-import { Users, ClipboardList, TrendingUp, BarChart3 } from 'lucide-react';
+import { ClipboardList, TrendingUp, BarChart3 } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
