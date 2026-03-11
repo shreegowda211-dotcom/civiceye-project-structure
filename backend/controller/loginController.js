@@ -104,12 +104,21 @@ export const getProfile = async (req, res) => {
 // 📝 Officer Login Controller
 // ===============================
 
+const OFFICER_DEFAULTS = {
+  "road@example1.com": { department: "Road Damage", password: "Road@example1" },
+  "garbage@example1.com": { department: "Garbage", password: "Garbage@example1" },
+  "streetlight@example1.com": { department: "Streetlight", password: "Streetlight@example1" },
+  "water@example1.com": { department: "Water Leakage", password: "Water@example1" },
+  "other@example1.com": { department: "Other", password: "Other@example1" },
+};
+
 export const officerLogin = async (req, res) => {
   try {
     console.log("\n👮 OFFICER LOGIN ATTEMPT");
-    const { email, password } = req.body;
+    const { email, password, department } = req.body;
     console.log("   📧 Email received:", email);
     console.log("   🔑 Password received:", password ? "YES (length: " + password.length + ")" : "NO");
+    console.log("   🏷 Department received:", department);
 
     // #1 Trim and lowercase email
     const trimmedEmail = email?.trim().toLowerCase();
@@ -126,20 +135,45 @@ export const officerLogin = async (req, res) => {
 
     // #3 Find officer by email
     console.log("   🔍 Searching for officer with email:", trimmedEmail);
-    const findOfficer = await officer.findOne({ email: trimmedEmail });
+    let findOfficer = await officer.findOne({ email: trimmedEmail });
 
     if (!findOfficer) {
-      console.log("   ❌ Officer not found in database");
-      return res.status(404).json({
-        success: false,
-        message: "Officer not found",
-      });
+      console.log("   ⚠️ Officer not found in database. Checking default officer credentials.");
+      const defaultOfficer = OFFICER_DEFAULTS[trimmedEmail];
+      console.log("   🔎 Default officer record for this email:", defaultOfficer);
+
+      if (defaultOfficer && defaultOfficer.password === password) {
+        if (department && department !== defaultOfficer.department) {
+          return res.status(400).json({
+            success: false,
+            message: "Department mismatch for this default officer",
+          });
+        }
+
+        const createdOfficer = await officer.create({
+          name: `${defaultOfficer.department} Officer`,
+          email: trimmedEmail,
+          password: await bcrypt.hash(password, 10),
+          role: "Officer",
+          department: defaultOfficer.department,
+        });
+
+        findOfficer = createdOfficer;
+        console.log("   ✅ Default officer account created for login:", trimmedEmail);
+      } else {
+        console.log("   ❌ Officer not found and no matching default credentials");
+        return res.status(404).json({
+          success: false,
+          message: "Officer not found",
+        });
+      }
     }
+
     console.log("   ✅ Officer found:", findOfficer._id);
     console.log("   📝 Officer name:", findOfficer.name);
     console.log("   🏢 Officer department:", findOfficer.department);
 
-    // #4 Compare password
+    // #4 If default account used in-memory created, compare directly
     console.log("   🔐 Comparing passwords...");
     console.log("   📝 Stored hash length:", findOfficer.password ? findOfficer.password.length : "NO HASH");
     const comparePassword = await bcrypt.compare(password, findOfficer.password);

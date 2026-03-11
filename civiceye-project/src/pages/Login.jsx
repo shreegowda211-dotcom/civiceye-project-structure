@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, Briefcase, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,8 +9,33 @@ export default function Login() {
   const { login } = useAuth();
   const [role, setRole] = useState("Citizen");
   const [form, setForm] = useState({ email: "", password: "" });
+  const [department, setDepartment] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const OFFICER_DEFAULTS = {
+    "Road Damage": { email: "road@example1.com", password: "Road@example1" },
+    Garbage: { email: "garbage@example1.com", password: "Garbage@example1" },
+    Streetlight: { email: "streetlight@example1.com", password: "Streetlight@example1" },
+    "Water Leakage": { email: "water@example1.com", password: "Water@example1" },
+    Other: { email: "other@example1.com", password: "Other@example1" }
+  };
+
+  useEffect(() => {
+    if (role === "Officer") {
+      if (department && OFFICER_DEFAULTS[department]) {
+        setForm({
+          email: OFFICER_DEFAULTS[department].email,
+          password: OFFICER_DEFAULTS[department].password
+        });
+      } else {
+        setForm({ email: "", password: "" });
+      }
+    } else {
+      // Keep previous email/password state for Citizen/Admin behavior
+      setDepartment("");
+    }
+  }, [role, department]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.id]: e.target.value });
 
@@ -18,6 +43,11 @@ export default function Login() {
     e.preventDefault();
     if (!form.email || !form.password) {
       setMessage({ type: "error", text: "Email and password are required" });
+      return;
+    }
+
+    if (role === "Officer" && !department) {
+      setMessage({ type: "error", text: "Please select a department for officer login." });
       return;
     }
 
@@ -228,6 +258,29 @@ export default function Login() {
   </div>
 </div>
 
+            {/* Officer Department selector (only when officer role selected) */}
+            {role === "Officer" && (
+              <div className="mt-6 space-y-1.5">
+                <label htmlFor="department" className="block text-xs font-medium text-slate-700">
+                  Department
+                </label>
+                <select
+                  id="department"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                >
+                  <option value="">Select department</option>
+                  <option value="Road Damage">Road Damage</option>
+                  <option value="Garbage">Garbage</option>
+                  <option value="Streetlight">Streetlight</option>
+                  <option value="Water Leakage">Water Leakage</option>
+                  <option value="Other">Other</option>
+                </select>
+               
+              </div>
+            )}
+
             {/* Email */}
             <div className="mt-6 space-y-1.5">
               <label
@@ -239,7 +292,7 @@ export default function Login() {
               <input
                 id="email"
                 type="email"
-                 value={form.email}
+                value={form.email}
                 onChange={handleChange}
                 placeholder="you@example.com"
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 focus:shadow-md focus:scale-[1.01]"
@@ -287,19 +340,13 @@ export default function Login() {
                 Register here
               </Link>
             </p>
+            {role === "Officer"}
 
             {/* Admin Credentials Box */}
-            {role === "Admin" && (
-              <div className="mt-6 rounded-lg border border-dashed border-purple-300 bg-purple-50 px-3 py-3 text-xs text-purple-700">
-                <p className="font-semibold text-purple-900">Admin Credentials</p>
-                <p className="mt-1">
-                  📧 Email: <span className="font-mono font-semibold">shreegowda211@gmail.com</span>
-                </p>
-                <p className="mt-1">
-                  🔑 Password: <span className="font-mono font-semibold">Admin@shree1</span>
-                </p>
-              </div>
-            )}
+            {role === "Admin" }
+
+            {/* Officer Defaults Info */}
+            {role === "Officer"}
           </form>
 
             {/* // Demo access box 

@@ -29,9 +29,8 @@ export default function Register() {
       return false;
     }
 
-    if (role === "Officer" && !form.department) {
-      console.log("❌ Department value:", form.department);
-      setMessage({ type: "error", text: "Please select a department" });
+    if (role !== "Citizen") {
+      setMessage({ type: "error", text: "Only citizens can register. Please log in as admin/officer." });
       return false;
     }
 
@@ -57,16 +56,14 @@ export default function Register() {
       setLoading(true);
       let res;
       try {
-        // Try role-specific registration
+        // Citizen registration only.
         if (role.toLowerCase() === "citizen") {
           console.log("📝 Sending citizen registration:", form);
           res = await authAPI.registerCitizen(form);
-        } else if (role.toLowerCase() === "officer") {
-          console.log("👮 Sending officer registration:", form);
-          res = await authAPI.registerOfficer(form);
         } else {
-          console.log("📋 Sending generic registration:", { ...form, role });
-          res = await authAPI.register({ ...form, role });
+          setMessage({ type: "error", text: "Only citizens can register." });
+          setLoading(false);
+          return;
         }
       } catch (err) {
         // Fallback to generic endpoint
@@ -137,8 +134,8 @@ export default function Register() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="mt-6">
                 <label className="block text-xs font-medium text-slate-700">Select Your Role</label>
-                <div className="mt-3 grid grid-cols-2 gap-4">
-                  <button type="button" onClick={() => setRole('Citizen')} aria-pressed={role === 'Citizen'} className={`group relative rounded-2xl border p-4 text-left transition-all duration-300 ${role === 'Citizen' ? 'border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-100 scale-[1.03]' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'}`}>
+                <div className="mt-3 grid grid-cols-1 justify-items-center gap-4">
+                  <button type="button" onClick={() => setRole('Citizen')} aria-pressed={role === 'Citizen'} className={`group w-full sm:w-3/4 relative rounded-2xl border p-4 text-left transition-all duration-300 ${role === 'Citizen' ? 'border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-100 scale-[1.03]' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'}`}>
                     <div className="flex items-center gap-3">
                       <div className={`rounded-xl p-2 transition ${role === 'Citizen' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'}`}>
                         <User className="h-4 w-4" />
@@ -146,18 +143,6 @@ export default function Register() {
                       <div>
                         <p className="text-sm font-semibold text-slate-900">Citizen</p>
                         <p className="text-[11px] text-slate-500">Report & track issues</p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button type="button" onClick={() => setRole('Officer')} aria-pressed={role === 'Officer'} className={`group relative rounded-2xl border p-4 text-left transition-all duration-300 ${role === 'Officer' ? 'border-sky-500 bg-sky-50 shadow-lg shadow-sky-100 scale-[1.03]' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`rounded-xl p-2 transition ${role === 'Officer' ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'}`}>
-                        <Briefcase className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">Officer</p>
-                        <p className="text-[11px] text-slate-500">Manage & resolve issues</p>
                       </div>
                     </div>
                   </button>
