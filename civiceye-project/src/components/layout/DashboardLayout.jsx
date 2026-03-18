@@ -14,6 +14,11 @@ import {
   Menu,
   X,
   Plus,
+  User,
+  Bell,
+  MessageCircle,
+  AlertCircle,
+  UserCheck,
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
@@ -29,6 +34,9 @@ export default function DashboardLayout({ children }) {
     { icon: <PlusCircle className="h-5 w-5" />, label: "Report Issue", path: "/citizen/report" },
     { icon: <ClipboardList className="h-5 w-5" />, label: "My Issues", path: "/citizen/issues" },
     { icon: <Map className="h-5 w-5" />, label: "Track Issue", path: "/citizen/track" },
+    { icon: <User className="h-5 w-5" />, label: "Profile", path: "/citizen/profile" },
+    { icon: <Bell className="h-5 w-5" />, label: "Notifications", path: "/citizen/notifications" },
+    { icon: <MessageCircle className="h-5 w-5" />, label: "Feedback", path: "/citizen/feedback" },
   ];
 
   const officerNavItems = [
@@ -39,11 +47,19 @@ export default function DashboardLayout({ children }) {
 
   const adminNavItems = [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", path: "/admin" },
-    { icon: <Plus className="h-5 w-5" />, label: "Add Officer", path: "/admin/add-officer" },
-    { icon: <BarChart3 className="h-5 w-5" />, label: "Analytics", path: "/admin/analytics" },
-    { icon: <ClipboardList className="h-5 w-5" />, label: "All Issues", path: "/admin/issues" },
     { icon: <Users className="h-5 w-5" />, label: "Users", path: "/admin/users" },
+    { icon: <Users className="h-5 w-5" />, label: "Manage Officers", path: "/admin/manage-officers" },
+    { icon: <BarChart3 className="h-5 w-5" />, label: "Category Analytics", path: "/admin/categories" },
+    { icon: <ClipboardList className="h-5 w-5" />, label: "All Issues", path: "/admin/issues" },
+    { icon: <Map className="h-5 w-5" />, label: "Areas", path: "/admin/areas" },
+    // /admin/categories route is already used by Category Analytics
     { icon: <Settings className="h-5 w-5" />, label: "Departments", path: "/admin/departments" },
+    { icon: <Settings className="h-5 w-5" />, label: "Services", path: "/admin/services" },
+    { icon: <Settings className="h-5 w-5" />, label: "Reports", path: "/admin/reports" },
+    { icon: <AlertCircle className="h-5 w-5" />, label: "Escalations", path: "/admin/escalated" },
+    { icon: <UserCheck className="h-5 w-5" />, label: "Feedback", path: "/admin/feedback" },
+    { icon: <Settings className="h-5 w-5" />, label: "Settings", path: "/admin/settings" },
+    { icon: <Bell className="h-5 w-5" />, label: "Help", path: "/admin/help" },
   ];
 
   let menuItems;

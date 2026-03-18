@@ -84,21 +84,58 @@ export const officerAPI = {
 // ======================================
 
 export const adminAPI = {
-  // Get all complaints for platform statistics
-  getAllComplaints: () => apiClient.get('/admin/complaints'),
-  
-  // Get all citizens
+  // Complaint / issue endpoints
+  getAllComplaints: (params = {}) => apiClient.get('/admin/complaints', { params }),
+  assignOfficer: (complaintId, officerId) => apiClient.put(`/admin/complaints/${complaintId}/assign`, { officerId }),
+  markUrgent: (complaintId) => apiClient.put(`/admin/complaints/${complaintId}/urgent`),
+  escalate: (complaintId) => apiClient.put(`/admin/complaints/${complaintId}/escalate`),
+  autoAssignByCategory: () => apiClient.post('/admin/complaints/auto-assign'),
+
+  // User endpoints
   getAllCitizens: () => apiClient.get('/admin/citizens'),
-  
-  // Get all officers
   getAllOfficers: () => apiClient.get('/admin/officers'),
-  
-  // Create new officer
   createOfficer: (data) => apiClient.post('/admin/officers', data),
+  updateOfficer: (id, data) => apiClient.put(`/admin/officers/${id}`, data),
+  deleteOfficer: (id) => apiClient.delete(`/admin/officers/${id}`),
+
+  // Area endpoints
+  getAllAreas: () => apiClient.get('/admin/areas'),
+  createArea: (data) => apiClient.post('/admin/areas', data),
+  updateArea: (id, data) => apiClient.put(`/admin/areas/${id}`, data),
+  deleteArea: (id) => apiClient.delete(`/admin/areas/${id}`),
+  assignOfficerToArea: (id, officerId) => apiClient.put(`/admin/areas/${id}/assign-officer`, { officerId }),
+
+  // Feedback
+  getAllFeedback: () => apiClient.get('/admin/feedback'),
+
+  // Settings
+  getSettings: () => apiClient.get('/admin/settings'),
+  updateSettings: (data) => apiClient.put('/admin/settings', data),
 };
 
 // ======================================
-// 🔧 UTILITY FUNCTIONS
+// 📚 HELP/FAQ ENDPOINTS
+// ======================================
+
+export const helpAPI = {
+  getAllHelp: () => apiClient.get('/help'),
+  searchHelp: (query) => apiClient.get(`/help/search?query=${encodeURIComponent(query)}`),
+  getHelpByCategory: (category) => apiClient.get(`/help/category/${encodeURIComponent(category)}`),
+};
+
+// ======================================
+// �️ CATEGORY ENDPOINTS
+// ======================================
+
+export const categoryAPI = {
+  getAll: () => apiClient.get('/admin/categories'),
+  add: (data) => apiClient.post('/admin/categories', data),
+  edit: (id, data) => apiClient.put(`/admin/categories/${id}`, data),
+  delete: (id) => apiClient.delete(`/admin/categories/${id}`),
+};
+
+// ======================================
+// �🔧 UTILITY FUNCTIONS
 // ======================================
 
 export const handleApiError = (error) => {

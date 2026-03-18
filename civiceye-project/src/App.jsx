@@ -11,6 +11,9 @@ import NotFound from "./pages/NotFound";
 
 // Citizen Pages
 import CitizenDashboard from "./pages/citizen/CitizenDashboard";
+import CitizenProfile from "./pages/citizen/CitizenProfile";
+import CitizenNotifications from "./pages/citizen/CitizenNotifications";
+import CitizenFeedback from "./pages/citizen/CitizenFeedback";
 import ReportIssue from "./pages/citizen/ReportIssue";
 import AllIssues from "./pages/citizen/AllIssues";
 import IssueTracking from "./pages/citizen/IssueTracking";
@@ -21,8 +24,17 @@ import OfficerDashboard from "./pages/officer/OfficerDashboard";
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
-import AddOfficer from "./pages/admin/AddOfficer";
-import TransparencyDashboard from "./pages/admin/TransparencyDashboard";
+import AdminAreas from "./pages/admin/AdminAreas";
+import AdminCategoryDashboard from "./pages/admin/AdminCategoryDashboard";
+import AdminDepartments from "./pages/admin/AdminDepartments";
+import AdminEscalatedComplaints from "./pages/admin/EscalatedComplaints";
+import AdminFeedbackMonitoring from "./pages/admin/AdminFeedbackMonitoring";
+import AdminHelp from "./pages/admin/AdminHelp";
+import AdminManageOfficers from "./pages/admin/AdminManageOfficers";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminServices from "./pages/admin/AdminServices";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminAllIssues from "./pages/admin/AllIssues";
 
 const queryClient = new QueryClient();
 
@@ -120,8 +132,38 @@ function AppRoutes() {
             <IssueTracking />
           </ProtectedRoute>
         }
+      />      <Route
+        path="/citizen/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["citizen"]}>
+            <CitizenDashboard />
+          </ProtectedRoute>
+        }
       />
-
+      <Route
+        path="/citizen/profile"
+        element={
+          <ProtectedRoute allowedRoles={["citizen"]}>
+            <CitizenProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/citizen/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["citizen"]}>
+            <CitizenNotifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/citizen/feedback"
+        element={
+          <ProtectedRoute allowedRoles={["citizen"]}>
+            <CitizenFeedback />
+          </ProtectedRoute>
+        }
+      />
       {/* Officer Routes */}
       <Route
         path="/officer"
@@ -161,7 +203,7 @@ function AppRoutes() {
         path="/admin/analytics"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <TransparencyDashboard />
+            <AdminCategoryDashboard />
           </ProtectedRoute>
         }
       />
@@ -169,7 +211,7 @@ function AppRoutes() {
         path="/admin/issues"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
+            <AdminAllIssues />
           </ProtectedRoute>
         }
       />
@@ -177,7 +219,7 @@ function AppRoutes() {
         path="/admin/add-officer"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AddOfficer />
+            <Navigate to="/admin/manage-officers" replace />
           </ProtectedRoute>
         }
       />
@@ -193,7 +235,79 @@ function AppRoutes() {
         path="/admin/departments"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
+            <AdminDepartments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/areas"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminAreas />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/categories"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminCategoryDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/help"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminHelp />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/manage-officers"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminManageOfficers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminReports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/services"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminServices />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/escalated"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminEscalatedComplaints />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/feedback"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminFeedbackMonitoring />
           </ProtectedRoute>
         }
       />

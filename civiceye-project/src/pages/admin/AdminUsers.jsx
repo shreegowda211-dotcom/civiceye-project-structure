@@ -19,6 +19,8 @@ export default function AdminUsers() {
           'auth-token': token
         }
       });
+      // Debug output
+      console.log('Fetched citizens:', res.data.data);
       return res.data.data || [];
     },
   });
@@ -92,7 +94,7 @@ export default function AdminUsers() {
                         <td colSpan="5" className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center justify-center gap-4">
                             <Users className="h-16 w-16 text-slate-300" />
-                            <p className="text-slate-600 text-lg">No citizens registered yet</p>
+                            <p className="text-slate-600 text-lg">No users found</p>
                           </div>
                         </td>
                       </tr>
@@ -108,7 +110,7 @@ export default function AdminUsers() {
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                              {user.role}
+                              {user.role || 'N/A'}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-500">

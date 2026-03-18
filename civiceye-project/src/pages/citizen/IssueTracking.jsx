@@ -376,7 +376,7 @@ export default function IssueTracking() {
                     </CardHeader>
                     <CardContent className="p-6">
                       <p className="text-sm text-slate-700">
-                        No officer assigned yet. Your complaint is under review.
+                        No officer assigned yet — category-based assignment queued.
                       </p>
                     </CardContent>
                   </Card>
