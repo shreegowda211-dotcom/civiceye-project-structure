@@ -47,6 +47,7 @@ export const authAPI = {
 
 export const profileAPI = {
   getCitizenProfile: () => apiClient.get('/citizen/profile'),
+  updateCitizenProfile: (data) => apiClient.put('/citizen/profile', data),
   getOfficerProfile: () => apiClient.get('/officer/profile'),
   getAdminProfile: () => apiClient.get('/admin/profile'),
 };
@@ -64,6 +65,10 @@ export const citizenAPI = {
 
   // Get single complaint by ID (issueId or MongoDB _id)
   getComplaintById: (complaintId) => apiClient.get(`/citizen/complaints/${complaintId}`),
+  getNotifications: () => apiClient.get('/citizen/notifications'),
+  markNotificationRead: (id) => apiClient.post(`/citizen/notifications/${id}/read`),
+  getFeedback: () => apiClient.get('/citizen/feedback'),
+  submitFeedback: (data) => apiClient.post('/citizen/feedback', data),
 };
 
 // ======================================
@@ -96,7 +101,10 @@ export const adminAPI = {
   getAllOfficers: () => apiClient.get('/admin/officers'),
   createOfficer: (data) => apiClient.post('/admin/officers', data),
   updateOfficer: (id, data) => apiClient.put(`/admin/officers/${id}`, data),
+  updateCitizen: (id, data) => apiClient.put(`/admin/citizens/${id}`, data),
   deleteOfficer: (id) => apiClient.delete(`/admin/officers/${id}`),
+  blockCitizen: (id, blocked) => apiClient.put(`/admin/citizens/${id}/block`, { blocked }),
+  blockOfficer: (id, blocked) => apiClient.put(`/admin/officers/${id}/block`, { blocked }),
 
   // Area endpoints
   getAllAreas: () => apiClient.get('/admin/areas'),
@@ -147,6 +155,11 @@ export const handleApiError = (error) => {
     status,
     error: error.response?.data?.error || null,
   };
+};
+
+// Export reportAPI for compatibility
+export const reportAPI = {
+  submitIssue: citizenAPI.reportIssue,
 };
 
 export default apiClient;

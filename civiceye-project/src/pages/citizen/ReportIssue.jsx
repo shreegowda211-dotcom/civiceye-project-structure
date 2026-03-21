@@ -1,197 +1,195 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { citizenAPI } from '@/services/api';
+import { UploadCloud } from 'lucide-react';
+import { reportAPI } from '@/services/api'; // Import the API service
 
 export default function ReportIssue() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-  
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'Road Damage',
-    priority: 'Low',
-    location: ''
+    category: '',
+    priority: '',
+    area: '',
+    image: null,
   });
+
+  const [statusMessage, setStatusMessage] = useState(''); // Add status message state
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!form.title || !form.description || !form.location) {
-      setMessage({ type: 'error', text: 'Please fill in all required fields' });
-      return;
-    }
+    setStatusMessage(''); // Clear previous status message
+
+    const formDataToSend = new FormData();
+    Object.keys(formData).forEach((key) => {
+      formDataToSend.append(key, formData[key]);
+    });
 
     try {
-      setLoading(true);
-      const res = await citizenAPI.reportIssue(form);
-
-      setMessage({ type: 'success', text: 'Issue reported successfully! ✅' });
-      
-      // Clear form
-      setForm({
-        title: '',
-        description: '',
-        category: 'Road Damage',
-        priority: 'Low',
-        location: ''
-      });
-
-      // Redirect to dashboard after 2 seconds
-      setTimeout(() => {
-        navigate('/citizen');
-      }, 2000);
-
+      const response = await reportAPI.submitIssue(formDataToSend); // Call the backend API
+      if (response.status === 200) {
+        setStatusMessage('✅ Issue reported successfully!');
+        setFormData({
+          title: '',
+          description: '',
+          category: '',
+          priority: '',
+          area: '',
+          image: null,
+        }); // Reset form
+      } else {
+        setStatusMessage('❌ Failed to report the issue. Please try again.');
+      }
     } catch (error) {
-      console.error('Error reporting issue:', error);
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Failed to report issue. Please try again.'
-      });
-    } finally {
-      setLoading(false);
+      setStatusMessage('❌ An error occurred while reporting the issue.');
     }
-  };
-
-  const handleCancel = () => {
-    navigate('/citizen');
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 bg-slate-50 p-6 rounded-lg shadow-lg">
-        {/* header with gradient to match dashboards */}
-        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white">
-          <h1 className="font-heading text-3xl font-bold mb-2">Report an Issue</h1>
-          <p className="text-slate-200">
-            Help us improve your city by reporting civic issues
-          </p>
-        </div>
+      <motion.div
+        className="p-6 space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
+        <header className="text-center">
+          <h1 className="text-3xl font-bold text-slate-900">Report an Issue</h1>
+          <p className="text-slate-600">Help us improve your area by reporting problems</p>
+        </header>
 
-        {message && (
-          <div className={`rounded-lg p-4 ${
-            message.type === 'error' 
-              ? 'bg-red-100 text-red-800 border border-red-300' 
-              : 'bg-green-100 text-green-800 border border-green-300'
-          }`}>
-            {message.text}
-          </div>
-        )}
-
-        <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
-            <CardTitle className="text-xl font-semibold">Issue Details</CardTitle>
+        <Card className="glassmorphism p-6 shadow-lg rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Fill in the details below</CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Title *</label>
+                <label className="block text-sm font-medium text-slate-700">Title</label>
                 <input
                   type="text"
                   name="title"
-                  value={form.title}
+                  value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="Brief title of the issue"
-                  className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
+                  placeholder="Enter issue title"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Description *</label>
+                <label className="block text-sm font-medium text-slate-700">Category</label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  <option value="Road Damage">Road Damage</option>
+                  <option value="Water Leakage">Water Leakage</option>
+                  <option value="Garbage Issue">Garbage Issue</option>
+                  <option value="Electricity Problem">Electricity Problem</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-slate-700">Description</label>
                 <textarea
                   name="description"
-                  value={form.description}
+                  value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Detailed description"
-                  rows={5}
-                  className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all resize-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
+                  rows="4"
+                  placeholder="Describe the issue in detail"
                   required
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
-                  <select 
-                    name="category"
-                    value={form.category}
-                    onChange={handleInputChange}
-                    className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
-                  >
-                    <option value="Road Damage">Road Damage</option>
-                    <option value="Garbage">Garbage</option>
-                    <option value="Streetlight">Streetlight</option>
-                    <option value="Water Leakage">Water Leakage</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Priority</label>
-                  <select 
-                    name="priority"
-                    value={form.priority}
-                    onChange={handleInputChange}
-                    className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
+                ></textarea>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Location *</label>
+                <label className="block text-sm font-medium text-slate-700">Priority</label>
+                <select
+                  name="priority"
+                  value={formData.priority}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
+                  required
+                >
+                  <option value="">Select priority</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Area</label>
                 <input
                   type="text"
-                  name="location"
-                  value={form.location}
+                  name="area"
+                  value={formData.area}
                   onChange={handleInputChange}
-                  placeholder="Address or location details"
-                  className="w-full text-sm rounded-lg border border-slate-300 px-4 py-3 bg-white text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
+                  placeholder="Enter area name"
                   required
                 />
               </div>
 
-              <div className="flex gap-4 pt-6 border-t border-slate-200">
-                <Button 
-                  variant="civic" 
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-slate-700">Upload Image</label>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-emerald-500 transition-all">
+                  <input
+                    type="file"
+                    name="image"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <UploadCloud className="h-10 w-10 text-slate-400 mx-auto" />
+                    <p className="text-sm text-slate-600">Drag and drop or click to upload</p>
+                  </label>
+                  {formData.image && (
+                    <p className="text-sm text-emerald-600 mt-2">{formData.image.name}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-2 text-center">
+                <Button
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-all"
                 >
-                  {loading ? 'Submitting...' : 'Submit Report'}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  type="button"
-                  onClick={handleCancel}
-                  disabled={loading}
-                  className="px-6 py-3 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg transition-all"
-                >
-                  Cancel
+                  <UploadCloud className="h-5 w-5 mr-2" /> Submit Complaint
                 </Button>
               </div>
             </form>
+            {statusMessage && (
+              <p
+                className={`mt-4 text-center font-medium ${
+                  statusMessage.includes('✅')
+                    ? 'text-green-600'
+                    : 'text-red-600'
+                }`}
+              >
+                {statusMessage}
+              </p>
+            )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     </DashboardLayout>
   );
 }

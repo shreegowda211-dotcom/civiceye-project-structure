@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { citizenAPI } from '@/services/api';
+import { safeQuery } from '@/lib/safeQuery';
 import { Button } from '@/components/ui/button';
 import { Shield, User, LogOut, Bell, Menu, X } from 'lucide-react';
 
@@ -13,8 +14,8 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { data: notifications = [], isLoading: isNotifLoading } = useQuery({
-    queryKey: ['citizen-notifications'],
-    queryFn: () => citizenAPI.getNotifications().then(res => res.data.data || []),
+    queryKey: ['citizen-notifications', user?.id],
+    queryFn: safeQuery(() => citizenAPI.getNotifications().then((res) => res.data.data), []),
     enabled: !!user && user.role?.toLowerCase() === 'citizen',
     staleTime: 15 * 1000,
     refetchInterval: 30 * 1000,

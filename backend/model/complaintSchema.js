@@ -53,6 +53,32 @@ const complaintSchema = new mongoose.Schema({
     default: null,
   },
 
+  urgent: {
+    type: Boolean,
+    default: false,
+  },
+
+  escalated: {
+    type: Boolean,
+    default: false,
+  },
+
+  escalationLevel: {
+    type: Number,
+    default: 0,
+  },
+
+  escalationTimeline: [{
+    level: Number,
+    officer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'officer',
+      default: null,
+    },
+    note: String,
+    date: Date,
+  }],
+
 }, { timestamps: true });
 
 const Complaint = mongoose.model("complaint", complaintSchema);

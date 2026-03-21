@@ -1,9 +1,11 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citizenAPI } from '@/services/api';
+import { safeQuery } from '@/lib/safeQuery';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bell, CheckCircle2 } from 'lucide-react';
@@ -14,7 +16,7 @@ export default function CitizenNotifications() {
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['citizen-notifications', user?.id],
-    queryFn: () => citizenAPI.getNotifications().then((res) => res.data.data || []),
+    queryFn: safeQuery(() => citizenAPI.getNotifications().then((res) => res.data.data), []),
     enabled: !!user,
     staleTime: 30 * 1000,
   });

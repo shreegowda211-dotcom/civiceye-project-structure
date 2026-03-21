@@ -38,8 +38,13 @@ export default function AdminSettings() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin-settings'],
     queryFn: async () => {
-      const res = await adminAPI.getSettings();
-      return res.data.data;
+      try {
+        const res = await adminAPI.getSettings();
+        return res.data?.data ?? {};
+      } catch (error) {
+        console.warn('adminAPI.getSettings failed', error?.message || error);
+        return {};
+      }
     },
     staleTime: 60_000,
     enabled: !!token,

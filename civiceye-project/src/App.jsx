@@ -24,6 +24,7 @@ import OfficerDashboard from "./pages/officer/OfficerDashboard";
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminAllUsers from "./pages/admin/AllIssues";
 import AdminAreas from "./pages/admin/AdminAreas";
 import AdminCategoryDashboard from "./pages/admin/AdminCategoryDashboard";
 import AdminDepartments from "./pages/admin/AdminDepartments";
@@ -224,10 +225,10 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/admin/users"
+        path="/admin/all-users"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
-            <AdminUsers />
+            <AdminAllUsers />
           </ProtectedRoute>
         }
       />

@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }) {
 
   const adminNavItems = [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", path: "/admin" },
-    { icon: <Users className="h-5 w-5" />, label: "Users", path: "/admin/users" },
+    { icon: <Users className="h-5 w-5" />, label: "Users", path: "/admin/all-users" },
     { icon: <Users className="h-5 w-5" />, label: "Manage Officers", path: "/admin/manage-officers" },
     { icon: <BarChart3 className="h-5 w-5" />, label: "Category Analytics", path: "/admin/categories" },
     { icon: <ClipboardList className="h-5 w-5" />, label: "All Issues", path: "/admin/issues" },

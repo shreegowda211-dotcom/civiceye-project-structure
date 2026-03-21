@@ -1,7 +1,7 @@
 import express from 'express';
 import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers, createOfficer } from '../controller/loginController.js';
 import { getAllComplaints, assignOfficerToComplaint, autoAssignCategoryComplaints, markComplaintUrgent, escalateComplaint } from '../controller/adminController.js';
-import { deleteCitizen, updateCitizen, getAllAreas, createArea, updateArea, deleteArea, assignOfficerToArea, getAllFeedback, getAdminSettings, updateAdminSettings } from '../controller/adminController.js';
+import { deleteCitizen, updateCitizen, getAllAreas, createArea, updateArea, deleteArea, assignOfficerToArea, getAllFeedback, getAdminSettings, updateAdminSettings, blockCitizen, blockOfficer } from '../controller/adminController.js';
 import { getAllCategories, addCategory, editCategory, deleteCategory } from '../controller/categoryController.js';
 import { updateOfficer, deleteOfficer } from '../controller/adminController.js';
 import { verifyAdminToken } from '../middleware/authAdmin.js';
@@ -22,11 +22,13 @@ router.post('/complaints/auto-assign', verifyAdminToken, autoAssignCategoryCompl
 // User management routes for admin
 router.get('/citizens', verifyAdminToken, getAllCitizens);
 router.put('/citizens/:id', verifyAdminToken, updateCitizen);
+router.put('/citizens/:id/block', verifyAdminToken, blockCitizen);
 router.delete('/citizens/:id', verifyAdminToken, deleteCitizen);
 
 router.get('/officers', verifyAdminToken, getAllOfficers);
 router.post('/officers', verifyAdminToken, createOfficer);
 router.put('/officers/:id', verifyAdminToken, updateOfficer);
+router.put('/officers/:id/block', verifyAdminToken, blockOfficer);
 router.delete('/officers/:id', verifyAdminToken, deleteOfficer);
 
 // Area management

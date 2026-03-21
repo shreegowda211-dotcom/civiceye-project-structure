@@ -46,7 +46,11 @@ export default function AdminEscalatedComplaints() {
 
   const escalateMutation = useMutation({
     mutationFn: (complaintId) => adminAPI.escalate(complaintId),
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-complaints']);
+      queryClient.invalidateQueries(['admin-escalated-complaints']);
+      refetch();
+    },
   });
 
   const delayedComplaints = useMemo(

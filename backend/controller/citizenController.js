@@ -1,4 +1,7 @@
 import citizen from "../model/citizenScheme.js";
+import Feedback from "../model/feedbackSchema.js";
+import Complaint from "../model/complaintSchema.js";
+import Officer from "../model/officerSchema.js";
 import bcrypt from "bcrypt";
 
  // 📧 Email validation regex
@@ -96,6 +99,74 @@ export const citizenRegister = async (req, res) => {
       success: false,
       message: "Server error. Please try again later.",
     });
+  }
+};
+
+// ===============================
+// ⭐ Citizen feedback submission
+// ===============================
+
+export const submitFeedback = async (req, res) => {
+  try {
+    const citizenId = req.citizen?.id;
+    if (!citizenId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized citizen' });
+    }
+
+    const { complaintId, officerId, rating, satisfactionScore, comments } = req.body;
+
+    if (!complaintId || !officerId || !rating || satisfactionScore === undefined) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const complaint = await Complaint.findById(complaintId);
+    if (!complaint || complaint.citizen.toString() !== citizenId) {
+      return res.status(404).json({ success: false, message: 'Complaint not found for this citizen' });
+    }
+
+    const officer = await Officer.findById(officerId);
+    if (!officer) {
+      return res.status(404).json({ success: false, message: 'Officer not found' });
+    }
+
+    const existing = await Feedback.findOne({ citizen: citizenId, complaint: complaintId, officer: officerId });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Feedback already submitted for this issue/officer' });
+    }
+
+    const newFeedback = await Feedback.create({
+      citizen: citizenId,
+      officer: officerId,
+      complaint: complaintId,
+      rating,
+      satisfactionScore,
+      comments: comments || '',
+    });
+
+    return res.status(201).json({ success: true, message: 'Feedback saved', data: newFeedback });
+  } catch (error) {
+    console.error('Error submitting feedback:', error.message);
+    return res.status(500).json({ success: false, message: 'Server error while submitting feedback', error: error.message });
+  }
+};
+
+export const getFeedback = async (req, res) => {
+  try {
+    const citizenId = req.citizen?.id;
+    if (!citizenId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized citizen' });
+    }
+
+    const feedbackList = await Feedback.find({ citizen: citizenId })
+      .populate('officer', 'name email')
+      .populate('complaint', 'issueId title')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({ success: true, message: 'Feedback retrieved', data: feedbackList });
+  } catch (error) {
+    console.error('Error retrieving feedback:', error.message);
+    return res.status(500).json({ success: false, message: 'Server error while retrieving feedback', error: error.message });
   }
 };
 

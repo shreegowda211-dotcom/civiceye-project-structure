@@ -66,11 +66,18 @@ export default function AdminAllIssues() {
   // Actions (integrate with backend)
   const assignMutation = useMutation({
     mutationFn: ({ complaintId, officerId }) => adminAPI.assignOfficer(complaintId, officerId),
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-complaints']);
+      refetch();
+    },
   });
   const urgentMutation = useMutation({
     mutationFn: (complaintId) => adminAPI.markUrgent(complaintId),
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-complaints']);
+      queryClient.invalidateQueries(['admin-escalated-complaints']);
+      refetch();
+    },
   });
   const autoAssignMutation = useMutation({
     mutationFn: () => adminAPI.autoAssignByCategory(),
@@ -93,7 +100,11 @@ export default function AdminAllIssues() {
 
   const escalateMutation = useMutation({
     mutationFn: (complaintId) => adminAPI.escalate(complaintId),
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-complaints']);
+      queryClient.invalidateQueries(['admin-escalated-complaints']);
+      refetch();
+    },
   });
 
   // Example: open assign modal, then call assignMutation.mutate({ complaintId, officerId })
@@ -108,11 +119,19 @@ export default function AdminAllIssues() {
     assignMutation.mutate({ complaintId: complaint._id, officerId: chosenOfficer });
   };
   const handleMarkUrgent = (complaint) => {
+    if (complaint.urgent) {
+      alert('Complaint is already marked as urgent.');
+      return;
+    }
     if (window.confirm('Mark this complaint as urgent?')) {
       urgentMutation.mutate(complaint._id);
     }
   };
   const handleEscalate = (complaint) => {
+    if (complaint.escalated) {
+      alert('Complaint is already escalated.');
+      return;
+    }
     if (window.confirm('Escalate this complaint?')) {
       escalateMutation.mutate(complaint._id);
     }
@@ -189,10 +208,10 @@ export default function AdminAllIssues() {
                     <td className="px-4 py-3 text-slate-700 font-semibold">{complaint.assignedOfficer?.name || 'Unassigned'}</td>
                     <td className="px-4 py-3 text-slate-500 font-semibold tracking-wide">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 flex gap-2">
-                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => handleAssign(complaint)} title="Assign Officer"><UserPlus className="h-4 w-4 text-blue-700" /></Button>
-                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => handleReassign(complaint)} title="Reassign"><RefreshCw className="h-4 w-4 text-blue-700" /></Button>
-                      <Button size="sm" variant="ghost" className="border border-amber-200 hover:bg-amber-50" onClick={() => handleMarkUrgent(complaint)} title="Mark Urgent"><AlertTriangle className="h-4 w-4 text-amber-500" /></Button>
-                      <Button size="sm" variant="ghost" className="border border-rose-200 hover:bg-rose-50" onClick={() => handleEscalate(complaint)} title="Escalate"><ArrowUpRight className="h-4 w-4 text-rose-500" /></Button>
+                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => handleAssign(complaint)} title="Assign Officer" disabled={assignMutation.isLoading}><UserPlus className="h-4 w-4 text-blue-700" /></Button>
+                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => handleReassign(complaint)} title="Reassign" disabled={assignMutation.isLoading}><RefreshCw className="h-4 w-4 text-blue-700" /></Button>
+                      <Button size="sm" variant="ghost" className="border border-amber-200 hover:bg-amber-50" onClick={() => handleMarkUrgent(complaint)} title="Mark Urgent" disabled={urgentMutation.isLoading || complaint.urgent}><AlertTriangle className="h-4 w-4 text-amber-500" /></Button>
+                      <Button size="sm" variant="ghost" className="border border-rose-200 hover:bg-rose-50" onClick={() => handleEscalate(complaint)} title="Escalate" disabled={escalateMutation.isLoading || complaint.escalated}><ArrowUpRight className="h-4 w-4 text-rose-500" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => setExpandedRow(expandedRow === complaint._id ? null : complaint._id)}>{expandedRow === complaint._id ? <ChevronUp /> : <ChevronDown />}</Button>
                     </td>
                   </tr>

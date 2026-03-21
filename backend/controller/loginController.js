@@ -100,6 +100,57 @@ export const getProfile = async (req, res) => {
     }
 }
 
+export const updateProfile = async (req, res) => {
+  try {
+    const citizenID = req.citizen.id;
+    const { name, email } = req.body;
+
+    if (!name && !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one field (name or email) must be provided for update.',
+      });
+    }
+
+    const updates = {};
+    if (name) updates.name = name.trim();
+    if (email) updates.email = email.trim().toLowerCase();
+
+    if (updates.email) {
+      const existing = await citizen.findOne({ email: updates.email, _id: { $ne: citizenID } });
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: 'Email already in use by another account.',
+        });
+      }
+    }
+
+    const updatedCitizen = await citizen
+      .findByIdAndUpdate(citizenID, updates, { new: true, runValidators: true })
+      .select('-password');
+
+    if (!updatedCitizen) {
+      return res.status(404).json({
+        success: false,
+        message: 'Citizen not found.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Citizen profile updated successfully.',
+      data: updatedCitizen,
+    });
+  } catch (error) {
+    console.error('Profile update failed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while updating profile.',
+    });
+  }
+};
+
 // ===============================
 // 📝 Officer Login Controller
 // ===============================

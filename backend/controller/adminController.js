@@ -1,4 +1,49 @@
 /**
+ * @desc Block or unblock a citizen
+ * @route PUT /api/admin/citizens/:id/block
+ * @access Private/Admin
+ */
+export const blockCitizen = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { blocked } = req.body;
+    const citizen = await Citizen.findByIdAndUpdate(
+      id,
+      { blocked: !!blocked },
+      { new: true, runValidators: true }
+    ).select('-password');
+    if (!citizen) {
+      return res.status(404).json({ success: false, message: 'Citizen not found' });
+    }
+    res.status(200).json({ success: true, message: blocked ? 'Citizen blocked' : 'Citizen unblocked', data: citizen });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update block status', error: error.message });
+  }
+};
+
+/**
+ * @desc Block or unblock an officer
+ * @route PUT /api/admin/officers/:id/block
+ * @access Private/Admin
+ */
+export const blockOfficer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { blocked } = req.body;
+    const officer = await Officer.findByIdAndUpdate(
+      id,
+      { blocked: !!blocked },
+      { new: true, runValidators: true }
+    ).select('-password');
+    if (!officer) {
+      return res.status(404).json({ success: false, message: 'Officer not found' });
+    }
+    res.status(200).json({ success: true, message: blocked ? 'Officer blocked' : 'Officer unblocked', data: officer });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update block status', error: error.message });
+  }
+};
+/**
  * @desc Delete citizen by ID
  * @route DELETE /api/admin/citizens/:id
  * @access Private/Admin

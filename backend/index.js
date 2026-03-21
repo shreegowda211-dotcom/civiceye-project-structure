@@ -6,14 +6,17 @@ import officerRouter from './router/officerRouter.js';
 import adminRouter from './router/adminRouter.js';
 
 // import individual controller functions for generic endpoints
-import { citizenRegister } from './controller/citizenController.js';
+import helpRouter from './router/helpRouter.js';
+import { citizenRegister, submitFeedback, getFeedback } from './controller/citizenController.js';
 import { officerRegister } from './controller/officerController.js';
 import { citizenLogin, officerLogin, adminLogin } from './controller/loginController.js';
+import { verifyCitizenToken } from './middleware/authAdmin.js';
 
 const app = express();
 app.use(express.json())
 app.use(cors())
 connectToDB();
+app.use('/api/help', helpRouter);
 
 // 📝 Request logging middleware for all requests
 app.use((req, res, next) => {
@@ -106,6 +109,10 @@ app.use((req, res, next) => {
 app.use("/api/citizen", citizenRouter);
 app.use("/api/officer", officerRouter);
 app.use("/api/admin", adminRouter);
+
+// Ensure direct feedback endpoints always work (safe fallback)
+app.get('/api/citizen/feedback', verifyCitizenToken, getFeedback);
+app.post('/api/citizen/feedback', verifyCitizenToken, submitFeedback);
 
 // generic registration endpoint that dispatches based on role
 app.post("/api/register", (req, res) => {
