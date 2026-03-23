@@ -58,6 +58,14 @@ export const createComplaint = async (req, res) => {
     const issueId = await generateNextIssueId();
     console.log("🆔 Generated Issue ID:", issueId);
 
+    // Auto-assign officer based on category
+    const officer = await Officer.findOne({ categories: category });
+    if (!officer) {
+      return res.status(400).json({
+        message: "No officer available for the selected category",
+      });
+    }
+
     // Create new complaint
     const newComplaint = new Complaint({
       issueId,
@@ -66,7 +74,8 @@ export const createComplaint = async (req, res) => {
       category,
       priority,
       location,
-      citizen: citizenId
+      citizen: citizenId,
+      assignedOfficer: officer._id, // Assign officer
     });
 
     // Save to database

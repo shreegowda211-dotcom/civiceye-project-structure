@@ -12,7 +12,7 @@ export default function ReportIssue() {
     description: '',
     category: '',
     priority: '',
-    area: '',
+    location: '', // Updated from 'area' to 'location'
     image: null,
   });
 
@@ -45,7 +45,7 @@ export default function ReportIssue() {
           description: '',
           category: '',
           priority: '',
-          area: '',
+          location: '',
           image: null,
         }); // Reset form
       } else {
@@ -135,14 +135,14 @@ export default function ReportIssue() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700">Area</label>
+                <label className="block text-sm font-medium text-slate-700">Location</label>
                 <input
                   type="text"
-                  name="area"
-                  value={formData.area}
+                  name="location"
+                  value={formData.location}
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                  placeholder="Enter area name"
+                  placeholder="Enter location name"
                   required
                 />
               </div>

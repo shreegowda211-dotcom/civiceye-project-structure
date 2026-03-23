@@ -15,8 +15,14 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('civiceye_token');
   if (token) {
     config.headers['auth-token'] = token;
+  } else {
+    console.warn('No authentication token found. Redirecting to login.');
+    // Optionally, redirect to login page or handle missing token
   }
   return config;
+}, (error) => {
+  console.error('Error in request interceptor:', error);
+  return Promise.reject(error);
 });
 
 // ======================================

@@ -6,19 +6,17 @@ const verifyCitizenToken = async (req, res, next) => {
     if (!token) {
         return res.status(401).json({
             success: false,
-            message: "Please authenticate using valid token",
+            message: "Authentication token is missing. Please log in.",
         });
     }
-    try{
+    try {
         const decoded = jwt.verify(token, CITIZEN_KEY);
-        // attach decoded payload to req so controllers can use it
         req.citizen = decoded;
         return next();
-    }
-    catch (error){
+    } catch (error) {
         return res.status(401).json({
-            success:false,
-            message:"Invalid or expired token"
+            success: false,
+            message: error.name === "TokenExpiredError" ? "Token has expired. Please log in again." : "Invalid token. Please log in.",
         });
     }
 };
@@ -28,19 +26,17 @@ const verifyOfficerToken = async (req, res, next) => {
     if (!token) {
         return res.status(401).json({
             success: false,
-            message: "Please authenticate using valid token",
+            message: "Authentication token is missing. Please log in.",
         });
     }
-    try{
+    try {
         const decoded = jwt.verify(token, OFFICER_KEY);
-        // attach decoded payload to req so controllers can use it
         req.officer = decoded;
         return next();
-    }
-    catch (error){
+    } catch (error) {
         return res.status(401).json({
-            success:false,
-            message:"Invalid or expired token"
+            success: false,
+            message: error.name === "TokenExpiredError" ? "Token has expired. Please log in again." : "Invalid token. Please log in.",
         });
     }
 };
@@ -48,9 +44,9 @@ const verifyOfficerToken = async (req, res, next) => {
 const verifyAdminToken = async (req, res, next) => {
     let token = req.header("auth-token");
     if (!token) {
-        return res.json({
+        return res.status(401).json({
             success: false,
-            message: "Please authenticate using valid token",
+            message: "Authentication token is missing. Please log in.",
         });
     }
     try {
@@ -58,9 +54,9 @@ const verifyAdminToken = async (req, res, next) => {
         req.admin = decoded;
         return next();
     } catch (error) {
-        return res.json({
+        return res.status(401).json({
             success: false,
-            message: "Invalid or expired token",
+            message: error.name === "TokenExpiredError" ? "Token has expired. Please log in again." : "Invalid token. Please log in.",
         });
     }
 };

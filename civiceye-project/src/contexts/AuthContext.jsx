@@ -16,7 +16,17 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
       const token = localStorage.getItem('civiceye_token');
-      return !!token;
+      if (!token) return false;
+
+      // Optionally, verify token expiration here
+      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+      if (decodedToken.exp * 1000 < Date.now()) {
+        console.warn('Token has expired. Logging out.');
+        localStorage.removeItem('civiceye_token');
+        return false;
+      }
+
+      return true;
     } catch {
       return false;
     }
