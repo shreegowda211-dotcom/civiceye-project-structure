@@ -23,6 +23,7 @@ import OfficerDashboard from "./pages/officer/OfficerDashboard";
 import OfficerAssignedIssues from "./pages/officer/OfficerAssignedIssues";
 import OfficerIssueDetails from "./pages/officer/OfficerIssueDetails";
 import OfficerPerformance from "./pages/officer/OfficerPerformance";
+import OfficerNotifications from "./pages/officer/OfficerNotifications";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -214,6 +215,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['officer']}>
             <OfficerPerformance />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/officer/notifications"
+        element={
+          <ProtectedRoute allowedRoles={['officer']}>
+            <OfficerNotifications />
           </ProtectedRoute>
         }
       />

@@ -20,7 +20,7 @@ const complaintSchema = new mongoose.Schema({
 
   category: {
     type: String,
-    enum: ["Road Damage", "Garbage Issue", "Streetlight Issue", "Water Leakage issue", "Electricity Problem", "Other"],
+    enum: ["Road Damage", "Garbage", "Streetlight", "Water Leakage", "Other"],
     required: true,
   },
 
@@ -78,6 +78,19 @@ const complaintSchema = new mongoose.Schema({
     note: String,
     date: Date,
   }],
+
+  // Officer resolution details
+  resolutionNotes: {
+    type: String,
+    default: null,
+    description: "Notes added by the assigned officer when resolving the complaint"
+  },
+
+  proofImagePath: {
+    type: String,
+    default: null,
+    description: "Path to the proof image uploaded by the officer"
+  },
 
 }, { timestamps: true });
 

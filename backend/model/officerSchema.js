@@ -25,6 +25,16 @@ const officerSchema = new mongoose.Schema({
         enum: ["Road Damage", "Garbage", "Streetlight", "Water Leakage", "Other"],
         required: true,
         description: "Category of issues this officer handles"
+    },
+    complaintsAssigned: {
+        type: Number,
+        default: 0,
+        description: "Total complaints assigned to this officer"
+    },
+    blocked: {
+        type: Boolean,
+        default: false,
+        description: "Whether the officer is blocked by admin"
     }
 }, {timestamps: true}); 
 

@@ -19,6 +19,11 @@ const citizenSchema = new mongoose.Schema({
         enum: ["Citizen", "Officer", "Admin"],
         required: true,
         default: "Citizen"
+    },
+    blocked: {
+        type: Boolean,
+        default: false,
+        description: "Whether the citizen is blocked by admin"
     }
 }, {timestamps: true}); 
 

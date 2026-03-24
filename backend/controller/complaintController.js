@@ -59,7 +59,7 @@ export const createComplaint = async (req, res) => {
     console.log("🆔 Generated Issue ID:", issueId);
 
     // Auto-assign officer based on category
-    const officer = await Officer.findOne({ categories: category });
+    const officer = await Officer.findOne({ department: category });
     if (!officer) {
       return res.status(400).json({
         message: "No officer available for the selected category",
@@ -287,12 +287,73 @@ export const getComplaintsForOfficer = async (req, res) => {
 
 export const updateComplaintStatus = async (req, res) => {
   try {
+    console.log("🔍 Incoming request body:", req.body);
+    console.log("🔍 Incoming request headers:", req.headers);
+    console.log("🔍 Content-Type:", req.headers['content-type']);
+
     const { complaintId } = req.params;
-    const { status } = req.body;
-    const officerId = req.officer?.id || req.officer?._id;
+    
+    // Handle both JSON and FormData requests
+    const status = req.body?.status || (req.body && Object.keys(req.body).find(key => key === 'status') ? req.body.status : null);
+    const notes = req.body?.notes;
+    const proofImage = req.file || req.body?.proofImage;
+    
+    let officerId = req.officer?.id || req.officer?._id;
 
     console.log("🔄 Officer updating complaint:", complaintId);
-    console.log("   New status:", status);
+    console.log("   Status field:", status);
+    console.log("   Has notes:", !!notes);
+    console.log("   Has proof image:", !!proofImage);
+
+    // Ensure officerId exists
+    if (!officerId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        error: "Officer ID not found in authentication token"
+      });
+    }
+
+    // Convert to ObjectId if it's a string and valid
+    if (typeof officerId === 'string') {
+      if (!mongoose.Types.ObjectId.isValid(officerId)) {
+        console.log("❌ Invalid officer ID format:", officerId);
+        return res.status(400).json({
+          message: "Invalid officer ID",
+          error: "Officer ID is not a valid identifier"
+        });
+      }
+      officerId = new mongoose.Types.ObjectId(officerId);
+    } else if (officerId instanceof mongoose.Types.ObjectId) {
+      // Already an ObjectId, convert to string then back to ensure it's valid
+      try {
+        officerId = new mongoose.Types.ObjectId(officerId.toString());
+      } catch (e) {
+        console.log("❌ Invalid officer ObjectId:", officerId);
+        return res.status(400).json({
+          message: "Invalid officer ID",
+          error: "Officer ID is corrupted"
+        });
+      }
+    } else {
+      // Try to convert whatever it is
+      try {
+        officerId = new mongoose.Types.ObjectId(String(officerId));
+      } catch (e) {
+        console.log("❌ Cannot convert officer ID to ObjectId:", officerId, e.message);
+        return res.status(400).json({
+          message: "Invalid officer ID",
+          error: "Officer ID cannot be converted to a valid identifier"
+        });
+      }
+    }
+
+    // Validate status exists
+    if (!status) {
+      return res.status(400).json({
+        message: "Bad request",
+        error: "Status is required in request body"
+      });
+    }
 
     // Validate status
     const validStatuses = ["Pending", "In Progress", "Resolved", "Rejected"];
@@ -303,22 +364,42 @@ export const updateComplaintStatus = async (req, res) => {
       });
     }
 
-    // Find complaint by issueId or _id
-    const searchQuery = {
-      $or: [
-        { issueId: complaintId.toUpperCase() },
-        { _id: complaintId }
-      ]
-    };
+    // Find complaint by issueId or _id (as ObjectId)
+    const searchCriteria = [];
 
-    // Try to parse as MongoDB ObjectId if not issueId
-    try {
-      const mongoId = new mongoose.Types.ObjectId(complaintId);
-      if (!searchQuery.$or.find(q => q._id)) {
-        searchQuery.$or.push({ _id: mongoId });
+    // Try to parse as MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(complaintId)) {
+      try {
+        const mongoId = new mongoose.Types.ObjectId(complaintId);
+        searchCriteria.push({ _id: mongoId });
+        console.log("   ✅ Parsed as ObjectId");
+      } catch (e) {
+        console.log("   ⚠️ ObjectId parse failed:", e.message);
       }
-    } catch (e) {
-      // Not a valid ObjectId, continue with issueId search
+    }
+
+    // Also try as issueId (exact match, case-insensitive)
+    searchCriteria.push({ issueId: complaintId });
+    searchCriteria.push({ issueId: complaintId.toUpperCase() });
+    searchCriteria.push({ issueId: complaintId.toLowerCase() });
+
+    // Remove duplicates
+    const seenValues = new Set();
+    const uniqueSearchCriteria = searchCriteria.filter(criterion => {
+      const key = JSON.stringify(criterion);
+      if (seenValues.has(key)) return false;
+      seenValues.add(key);
+      return true;
+    });
+
+    const searchQuery = { $or: uniqueSearchCriteria };
+    console.log("   🔍 Search query:", JSON.stringify(searchQuery, null, 2));
+
+    if (!uniqueSearchCriteria.length) {
+      return res.status(400).json({
+        message: "Invalid complaint ID",
+        error: "Complaint ID format is invalid"
+      });
     }
 
     const complaint = await Complaint.findOne(searchQuery)
@@ -326,7 +407,7 @@ export const updateComplaintStatus = async (req, res) => {
       .populate('assignedOfficer', 'name email');
 
     if (!complaint) {
-      console.log("❌ Complaint not found");
+      console.log("❌ Complaint not found with ID:", complaintId);
       return res.status(404).json({
         message: "Complaint not found",
         error: "No complaint with this ID"
@@ -351,12 +432,27 @@ export const updateComplaintStatus = async (req, res) => {
       });
     }
 
-    // Update the complaint status
+    // Update the complaint status and officer notes
     complaint.status = status;
     complaint.assignedOfficer = officerId; // Assign to updating officer
+    
+    // Add resolution notes if provided
+    if (notes) {
+      complaint.resolutionNotes = notes;
+    }
+    
+    // Add proof image path if provided
+    if (proofImage) {
+      // proofImage can be a multer file object with 'path' and 'filename' properties
+      // or a string (fallback case)
+      complaint.proofImagePath = typeof proofImage === 'string' ? proofImage : (proofImage.path || proofImage.filename);
+    }
+    
     const updatedComplaint = await complaint.save();
 
     console.log("✅ Complaint status updated to:", status);
+    console.log("✅ Resolution notes saved:", !!notes);
+    console.log("✅ Proof image saved:", !!proofImage);
 
     res.status(200).json({
       message: "Complaint status updated successfully",
@@ -364,10 +460,20 @@ export const updateComplaintStatus = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error updating complaint:", error);
-    res.status(500).json({
-      message: "Error updating complaint",
-      error: error.message
+    console.error("❌ Error in updateComplaintStatus:", error);
+    console.error("   Error name:", error.name);
+    console.error("   Error message:", error.message);
+    console.error("   Error code:", error.code);
+    console.error("   Full error:", JSON.stringify(error, null, 2));
+    
+    res.status(500).json({ 
+      message: "Internal Server Error", 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? {
+        name: error.name,
+        code: error.code,
+        path: error.path
+      } : undefined
     });
   }
 };

@@ -149,6 +149,8 @@ export const helpAPI = {
   getAllHelp: () => apiClient.get('/help'),
   searchHelp: (query) => apiClient.get(`/help/search?query=${encodeURIComponent(query)}`),
   getHelpByCategory: (category) => apiClient.get(`/help/category/${encodeURIComponent(category)}`),
+  // Public areas endpoint (no auth required)
+  getAllAreas: () => apiClient.get('/help/areas'),
 };
 
 // ======================================
