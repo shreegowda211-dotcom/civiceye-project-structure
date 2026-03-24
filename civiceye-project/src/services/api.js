@@ -85,9 +85,23 @@ export const officerAPI = {
   // Get all complaints assigned to officer's department
   getAssignedComplaints: () => apiClient.get('/officer/complaints'),
 
-  // Update complaint status
-  updateComplaintStatus: (complaintId, status) =>
-    apiClient.put(`/officer/complaints/${complaintId}/status`, { status }),
+  // Update complaint status with optional image and notes
+  updateComplaintStatus: (complaintId, status, formData = null) => {
+    if (formData) {
+      // Send FormData with file upload
+      return apiClient.put(`/officer/complaints/${complaintId}/status`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      // Send simple JSON for status-only updates
+      return apiClient.put(`/officer/complaints/${complaintId}/status`, { status });
+    }
+  },
+
+  // Get officer performance analytics
+  getOfficerPerformance: () => apiClient.get('/officer/performance'),
 };
 
 // ======================================

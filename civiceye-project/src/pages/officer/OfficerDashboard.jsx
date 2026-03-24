@@ -1,23 +1,32 @@
-import React, { useState } from 'react';
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { StatsCard } from '@/components/common/StatsCard';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { officerAPI } from '@/services/api';
-import { CheckSquare, ClipboardList, AlertTriangle, Edit2, X } from 'lucide-react';
+import {
+  CheckSquare,
+  ClipboardList,
+  AlertTriangle,
+  Zap,
+  Eye,
+  Pencil,
+  Calendar,
+  Briefcase,
+  Loader,
+  AlertCircle,
+} from 'lucide-react';
 
 export default function OfficerDashboard() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [newStatus, setNewStatus] = useState('');
+  const navigate = useNavigate();
 
-  // Fetch all complaints for officer's department
-  const { data: complaintData, isLoading, isError } = useQuery({
+  // Fetch assigned complaints from backend
+  const { data: complaintData = { complaints: [] }, isLoading, isError, error } = useQuery({
     queryKey: ['officer-complaints', user?.id],
     queryFn: async () => {
       if (!user) return { complaints: [] };
@@ -25,33 +34,19 @@ export default function OfficerDashboard() {
       return res.data;
     },
     enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Get complaints array safely
   const allComplaints = complaintData?.complaints || [];
 
-  // Mutation for updating complaint status
-  const updateStatusMutation = useMutation({
-    mutationFn: (data) => officerAPI.updateComplaintStatus(data.complaintId, data.status),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['officer-complaints']);
-      setSelectedComplaint(null);
-      setNewStatus('');
-    },
-  });
-
-  const handleUpdateStatus = () => {
-    if (!selectedComplaint || !newStatus) return;
-    updateStatusMutation.mutate({
-      complaintId: selectedComplaint.issueId,
-      status: newStatus,
-    });
-  };
-
+  // Calculate stats from real data
   const assignedCount = allComplaints.length;
   const resolvedCount = allComplaints.filter((i) => i.status === 'Resolved').length;
   const pendingCount = allComplaints.filter((i) => i.status === 'Pending').length;
   const inProgressCount = allComplaints.filter((i) => i.status === 'In Progress').length;
 
+  // Utility function to format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
@@ -67,112 +62,230 @@ export default function OfficerDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 bg-slate-50 p-6 rounded-lg shadow-lg">
-        {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white">
-          <div>
-            <h1 className="font-heading text-3xl font-bold mb-2">
-              Welcome, {user?.name}! 👮
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-6 space-y-8">
+        
+        {/* ========== WELCOME HEADER ========== */}
+        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-3xl p-8 shadow-xl text-white backdrop-blur-xl border border-slate-600/20">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight">
+              Welcome, {user?.name || 'Officer'}! 👮
             </h1>
-            <p className="text-slate-200">
-              Manage assigned issues and update their status
+            <p className="text-slate-200 text-lg">
+              Manage assigned issues and track resolution progress
             </p>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border-l-4 border-blue-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-semibold mb-1">Assigned Issues</p>
-                <p className="text-3xl font-bold text-slate-900">{assignedCount}</p>
-              </div>
-              <ClipboardList className="h-10 w-10 text-blue-500 opacity-50" />
-            </div>
-          </div>
+        {/* ========== SUMMARY CARDS ========== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
-          <div className="bg-white border-l-4 border-red-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-semibold mb-1">Pending</p>
-                <p className="text-3xl font-bold text-slate-900">{pendingCount}</p>
+          {/* Card 1: Assigned Complaints */}
+          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-semibold mb-1">Assigned Issues</p>
+                  <p className="text-4xl font-bold text-slate-900">{assignedCount}</p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
+                  <ClipboardList className="h-6 w-6 text-blue-600" />
+                </div>
               </div>
-              <AlertTriangle className="h-10 w-10 text-red-500 opacity-50" />
+              <div className="h-1 w-16 bg-blue-500 rounded-full"></div>
             </div>
           </div>
 
-          <div className="bg-white border-l-4 border-amber-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-semibold mb-1">In Progress</p>
-                <p className="text-3xl font-bold text-slate-900">{inProgressCount}</p>
+          {/* Card 2: Pending Complaints */}
+          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-semibold mb-1">Pending Issues</p>
+                  <p className="text-4xl font-bold text-slate-900">{pendingCount}</p>
+                </div>
+                <div className="bg-amber-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                </div>
               </div>
-              <ClipboardList className="h-10 w-10 text-amber-500 opacity-50" />
+              <div className="h-1 w-16 bg-amber-500 rounded-full"></div>
             </div>
           </div>
 
-          <div className="bg-white border-l-4 border-emerald-500 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600 text-sm font-semibold mb-1">Resolved</p>
-                <p className="text-3xl font-bold text-slate-900">{resolvedCount}</p>
+          {/* Card 3: In Progress Complaints */}
+          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-semibold mb-1">In Progress</p>
+                  <p className="text-4xl font-bold text-slate-900">{inProgressCount}</p>
+                </div>
+                <div className="bg-indigo-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
+                  <Zap className="h-6 w-6 text-indigo-600" />
+                </div>
               </div>
-              <CheckSquare className="h-10 w-10 text-emerald-500 opacity-50" />
+              <div className="h-1 w-16 bg-indigo-500 rounded-full"></div>
             </div>
           </div>
+
+          {/* Card 4: Resolved Complaints */}
+          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-600 text-sm font-semibold mb-1">Resolved Issues</p>
+                  <p className="text-4xl font-bold text-slate-900">{resolvedCount}</p>
+                </div>
+                <div className="bg-emerald-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
+                  <CheckSquare className="h-6 w-6 text-emerald-600" />
+                </div>
+              </div>
+              <div className="h-1 w-16 bg-emerald-500 rounded-full"></div>
+            </div>
+          </div>
+
         </div>
 
-        {/* Assigned Issues Table */}
-        <Card className="shadow-lg border-0">
-          <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-            <CardTitle>Assigned Issues</CardTitle>
+        {/* ========== QUICK ACTIONS SECTION ========== */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Quick Action 1: View Assigned Issues */}
+          <button 
+            onClick={() => navigate('/officer/issues')}
+            className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 text-left overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent group-hover:from-blue-500/10 transition-all"></div>
+            <div className="relative space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-100 p-4 rounded-xl group-hover:scale-110 transition-transform">
+                  <Eye className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">View Assigned Issues</h3>
+                  <p className="text-sm text-slate-600">Browse and manage all complaints assigned to you</p>
+                </div>
+              </div>
+              <div className="flex items-center text-blue-600 font-semibold group-hover:gap-3 transition-all">
+                View All
+                <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
+              </div>
+            </div>
+          </button>
+
+          {/* Quick Action 2: Update Complaint Status */}
+          <button 
+            onClick={() => navigate('/officer/update')}
+            className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 text-left overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent group-hover:from-emerald-500/10 transition-all"></div>
+            <div className="relative space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-emerald-100 p-4 rounded-xl group-hover:scale-110 transition-transform">
+                  <Pencil className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Update Status</h3>
+                  <p className="text-sm text-slate-600">Update the status of any complaint quickly</p>
+                </div>
+              </div>
+              <div className="flex items-center text-emerald-600 font-semibold group-hover:gap-3 transition-all">
+                Update Now
+                <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
+              </div>
+            </div>
+          </button>
+
+        </div>
+
+        {/* ========== RECENT ASSIGNED COMPLAINTS TABLE ========== */}
+        <Card className="shadow-xl border-0 overflow-hidden bg-white/80 backdrop-blur-lg">
+          <CardHeader className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 text-white px-8 py-6">
+            <div className="flex items-center gap-3">
+              <Briefcase className="h-6 w-6" />
+              <CardTitle className="text-2xl">Recent Assigned Complaints</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
-            {isLoading && <p className="text-center text-slate-500 py-8">Loading assigned issues...</p>}
-            {isError && <p className="text-center text-red-500 py-8">Error loading issues</p>}
-            {!isLoading && assignedCount === 0 && (
-              <p className="text-center text-slate-500 py-8">No issues assigned yet</p>
+          <CardContent className="p-0">
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader className="h-8 w-8 text-slate-600 animate-spin mr-3" />
+                <p className="text-slate-600 font-semibold">Loading assigned complaints...</p>
+              </div>
             )}
-            {!isLoading && assignedCount > 0 && (
+
+            {/* Error State */}
+            {isError && (
+              <div className="flex items-center gap-4 bg-red-50 border border-red-200 rounded-lg p-6 m-6">
+                <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-red-900">Error Loading Complaints</p>
+                  <p className="text-sm text-red-700">{error?.message || 'Failed to fetch assigned complaints. Please try again.'}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !isError && assignedCount === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <ClipboardList className="h-12 w-12 text-slate-300 mb-4" />
+                <p className="text-slate-600 font-semibold text-lg">No Complaints Assigned</p>
+                <p className="text-slate-500 text-sm mt-1">You don't have any complaints assigned to you yet</p>
+              </div>
+            )}
+
+            {/* Table */}
+            {!isLoading && !isError && assignedCount > 0 && (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-slate-200 bg-slate-50">
+                <table className="w-full">
+                  <thead className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-sm">
                     <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Issue ID</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Title</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Category</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Priority</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Status</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Reported</th>
-                      <th className="px-4 py-3 text-center font-semibold text-slate-700">Action</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Complaint ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Title</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Category</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Priority</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Status</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Reported</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {allComplaints.map((complaint) => (
-                      <tr key={complaint._id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="px-4 py-3 font-mono font-semibold text-blue-600">{complaint.issueId}</td>
-                        <td className="px-4 py-3 font-medium">{complaint.title}</td>
-                        <td className="px-4 py-3 text-slate-600">{complaint.category}</td>
-                        <td className="px-4 py-3">
+                      <tr
+                        key={complaint._id}
+                        className="hover:bg-blue-50/50 transition-colors duration-200 group"
+                      >
+                        <td className="px-6 py-4">
+                          <span className="font-mono font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg text-sm">
+                            {complaint.issueId}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-semibold text-slate-900 line-clamp-2">{complaint.title}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-slate-600">{complaint.category}</p>
+                        </td>
+                        <td className="px-6 py-4">
                           <PriorityBadge priority={complaint.priority} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-6 py-4">
                           <StatusBadge status={complaint.status} />
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{formatDate(complaint.createdAt)}</td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-6 py-4">
+                          <p className="text-slate-600 flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-slate-400" />
+                            {formatDate(complaint.createdAt)}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-center">
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedComplaint(complaint);
-                              setNewStatus(complaint.status);
-                            }}
-                            className="flex items-center gap-2 border-slate-300 text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 font-semibold px-4 py-2 rounded-lg transition-all"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 gap-2 inline-flex items-center"
                           >
-                            <Edit2 className="h-4 w-4" />
-                            Update
+                            <Eye className="h-4 w-4" />
+                            View
                           </Button>
                         </td>
                       </tr>
@@ -184,82 +297,6 @@ export default function OfficerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Update Status Modal */}
-        {selectedComplaint && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md shadow-lg border-0 bg-white rounded-xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-t-xl">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-0">
-                  <CardTitle className="text-xl font-semibold">Update Issue Status</CardTitle>
-                  <button
-                    onClick={() => {
-                      setSelectedComplaint(null);
-                      setNewStatus('');
-                    }}
-                    className="rounded-md p-2 hover:bg-white/20 transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6">
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-700">Issue ID</label>
-                  <p className="font-mono font-semibold text-blue-600 bg-slate-50 px-3 py-2 rounded-lg">{selectedComplaint.issueId}</p>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-700">Title</label>
-                  <p className="font-medium text-slate-900 bg-slate-50 px-3 py-2 rounded-lg">{selectedComplaint.title}</p>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-700">Current Status</label>
-                  <div className="bg-slate-50 px-3 py-2 rounded-lg">
-                    <StatusBadge status={selectedComplaint.status} />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <label htmlFor="status-select" className="text-sm font-semibold text-slate-700">
-                    New Status
-                  </label>
-                  <select
-                    id="status-select"
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full px-4 py-3 bg-white text-slate-900 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                  >
-                    <option value="">Select status...</option>
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
-                </div>
-                <div className="flex gap-4 pt-6">
-                  <Button
-                    onClick={handleUpdateStatus}
-                    disabled={!newStatus || updateStatusMutation.isPending}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {updateStatusMutation.isPending ? 'Updating...' : 'Update Status'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedComplaint(null);
-                      setNewStatus('');
-                    }}
-                    className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold px-6 py-3 rounded-lg transition-all"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-                {updateStatusMutation.isError && (
-                  <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">Error updating status. Please try again.</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

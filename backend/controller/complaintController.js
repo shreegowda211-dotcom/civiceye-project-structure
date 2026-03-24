@@ -371,3 +371,182 @@ export const updateComplaintStatus = async (req, res) => {
     });
   }
 };
+
+// ===============================
+// 📊 Get Officer Performance Analytics
+// ===============================
+
+export const getOfficerPerformance = async (req, res) => {
+  try {
+    console.log("\n📊 GET OFFICER PERFORMANCE ANALYTICS");
+    
+    const officerId = req.officer?.id || req.officer?._id;
+    console.log("   🆔 Officer ID:", officerId);
+    
+    if (!officerId) {
+      console.log("   ❌ No officer ID found in token");
+      return res.status(400).json({
+        message: "No officer ID in token",
+        error: "Missing officer identification"
+      });
+    }
+
+    // Get officer details
+    const officer = await Officer.findById(officerId);
+    
+    if (!officer) {
+      console.log("   ❌ Officer not found");
+      return res.status(404).json({
+        message: "Officer not found",
+        error: "Officer details not found"
+      });
+    }
+
+    console.log("   ✅ Officer found:", officer.name);
+    
+    // Get all complaints assigned to this officer
+    const complaints = await Complaint.find({ assignedOfficer: officerId });
+    
+    console.log("   📋 Total complaints assigned:", complaints.length);
+    
+    // Calculate basic stats
+    const resolved = complaints.filter(c => c.status === 'Resolved').length;
+    const pending = complaints.filter(c => c.status === 'Pending').length;
+    const inProgress = complaints.filter(c => c.status === 'In Progress').length;
+    const rejected = complaints.filter(c => c.status === 'Rejected').length;
+    const totalAssigned = complaints.length;
+    
+    // Calculate resolution times (in hours)
+    const resolvedComplaints = complaints.filter(c => c.status === 'Resolved' && c.updatedAt && c.createdAt);
+    const resolutionTimes = resolvedComplaints.map(c => {
+      const timeInMs = new Date(c.updatedAt) - new Date(c.createdAt);
+      return timeInMs / (1000 * 60 * 60); // Convert to hours
+    });
+    
+    const avgResolutionTime = resolutionTimes.length > 0 
+      ? resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length / 24 // Convert to days
+      : 0;
+    
+    const fastestResolution = resolutionTimes.length > 0 
+      ? Math.min(...resolutionTimes).toFixed(1)
+      : '0';
+    
+    const slowestResolution = resolutionTimes.length > 0 
+      ? Math.max(...resolutionTimes).toFixed(1)
+      : '0';
+    
+    // Calculate this month and last month averages
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    
+    const thisMonthResolved = complaints.filter(c => 
+      c.status === 'Resolved' && 
+      new Date(c.updatedAt) >= currentMonthStart
+    );
+    
+    const lastMonthResolved = complaints.filter(c => 
+      c.status === 'Resolved' && 
+      new Date(c.updatedAt) >= lastMonthStart && 
+      new Date(c.updatedAt) <= lastMonthEnd
+    );
+    
+    const thisMonthTimes = thisMonthResolved
+      .filter(c => c.createdAt)
+      .map(c => (new Date(c.updatedAt) - new Date(c.createdAt)) / (1000 * 60 * 60 * 24));
+    
+    const lastMonthTimes = lastMonthResolved
+      .filter(c => c.createdAt)
+      .map(c => (new Date(c.updatedAt) - new Date(c.createdAt)) / (1000 * 60 * 60 * 24));
+    
+    const thisMonthAvg = thisMonthTimes.length > 0 
+      ? thisMonthTimes.reduce((a, b) => a + b, 0) / thisMonthTimes.length
+      : 0;
+    
+    const lastMonthAvg = lastMonthTimes.length > 0
+      ? lastMonthTimes.reduce((a, b) => a + b, 0) / lastMonthTimes.length
+      : 0;
+    
+    // Calculate improvement percentage
+    const improvementPercentage = lastMonthAvg > 0 
+      ? ((lastMonthAvg - thisMonthAvg) / lastMonthAvg) * 100
+      : 0;
+    
+    // Build monthly data for chart
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+      
+      const monthComplaintsCount = complaints.filter(c =>
+        c.status === 'Resolved' &&
+        new Date(c.updatedAt) >= monthStart &&
+        new Date(c.updatedAt) <= monthEnd
+      ).length;
+      
+      const monthName = date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+      monthlyData.push({
+        month: monthName,
+        count: monthComplaintsCount
+      });
+    }
+    
+    // Build recent activities
+    const recentComplaints = complaints
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, 5);
+    
+    const recentActivities = recentComplaints.map(c => ({
+      id: c._id,
+      action: `Complaint ${c.status}`,
+      description: c.title,
+      time: new Date(c.updatedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      status: c.status
+    }));
+    
+    // Calculate performance rank (based on resolution rate)
+    const resolutionRate = totalAssigned > 0 ? (resolved / totalAssigned) * 100 : 0;
+    const performanceRank = resolutionRate >= 80 ? 5 : resolutionRate >= 60 ? 10 : 20;
+    
+    console.log("   ✅ Performance metrics calculated");
+    
+    res.status(200).json({
+      message: "Officer performance retrieved successfully",
+      totalAssigned,
+      resolved,
+      pending,
+      inProgress,
+      rejected,
+      avgResolutionTime: avgResolutionTime.toFixed(1),
+      thisMonthAvg: thisMonthAvg.toFixed(1),
+      lastMonthAvg: lastMonthAvg.toFixed(1),
+      fastestResolution,
+      slowestResolution,
+      improvementPercentage: improvementPercentage.toFixed(1),
+      performanceRank,
+      monthlyData,
+      recentActivities,
+      officer: {
+        name: officer.name,
+        email: officer.email,
+        department: officer.department
+      }
+    });
+    
+  } catch (error) {
+    console.error("\n❌ ERROR RETRIEVING OFFICER PERFORMANCE");
+    console.error("   Error:", error.message);
+    
+    res.status(500).json({
+      message: "Error retrieving performance data",
+      error: error.message
+    });
+  }
+};

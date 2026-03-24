@@ -20,6 +20,9 @@ import IssueTracking from "./pages/citizen/IssueTracking";
 
 // Officer Pages
 import OfficerDashboard from "./pages/officer/OfficerDashboard";
+import OfficerAssignedIssues from "./pages/officer/OfficerAssignedIssues";
+import OfficerIssueDetails from "./pages/officer/OfficerIssueDetails";
+import OfficerPerformance from "./pages/officer/OfficerPerformance";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -178,7 +181,7 @@ function AppRoutes() {
         path="/officer/issues"
         element={
           <ProtectedRoute allowedRoles={['officer']}>
-            <OfficerDashboard />
+            <OfficerAssignedIssues />
           </ProtectedRoute>
         }
       />
@@ -186,7 +189,31 @@ function AppRoutes() {
         path="/officer/update"
         element={
           <ProtectedRoute allowedRoles={['officer']}>
-            <OfficerDashboard />
+            <OfficerAssignedIssues />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/officer/update-status"
+        element={
+          <ProtectedRoute allowedRoles={['officer']}>
+            <OfficerAssignedIssues />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/officer/issue/:complaintId"
+        element={                                                                                                                
+          <ProtectedRoute allowedRoles={['officer']}>
+            <OfficerIssueDetails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/officer/performance"
+        element={
+          <ProtectedRoute allowedRoles={['officer']}>
+            <OfficerPerformance />
           </ProtectedRoute>
         }
       />
