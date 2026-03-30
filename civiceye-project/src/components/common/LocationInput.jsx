@@ -22,7 +22,6 @@ export default function LocationInput({
   const [isLoading, setIsLoading] = useState(false);
   const [isGeoLocating, setIsGeoLocating] = useState(false);
   const [localError, setLocalError] = useState(error || null);
-  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Refs
   const inputRef = useRef(null);
@@ -209,19 +208,17 @@ export default function LocationInput({
     );
   }, [onChange]);
 
-  // Initialize simple map using Leaflet CDN
+  // Initialize simple map using local Leaflet
   const initializeMap = useCallback((location) => {
-    setMapLoaded(true);
-
     // Load Leaflet if not already loaded
     if (!window.L) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+      link.href = '/libs/leaflet/leaflet.min.css';
       document.head.appendChild(link);
 
       const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+      script.src = '/libs/leaflet/leaflet.min.js';
       script.onload = () => {
         renderMap(location);
       };
@@ -229,7 +226,7 @@ export default function LocationInput({
     } else {
       renderMap(location);
     }
-  }, []);
+  }, [renderMap]);
 
   // Render map
   const renderMap = useCallback((location) => {
@@ -240,6 +237,11 @@ export default function LocationInput({
     if (window.mapInstance) {
       window.mapInstance.remove();
     }
+
+    // Configure default marker icons to use local paths
+    window.L.Icon.Default.prototype.options.iconUrl = '/libs/leaflet/images/marker-icon.png';
+    window.L.Icon.Default.prototype.options.iconRetinaUrl = '/libs/leaflet/images/marker-icon-2x.png';
+    window.L.Icon.Default.prototype.options.shadowUrl = '/libs/leaflet/images/marker-shadow.png';
 
     // Create new map
     const map = window.L.map('location-map').setView(

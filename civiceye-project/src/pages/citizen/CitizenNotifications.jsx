@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { citizenAPI } from '@/services/api';
 import {
   Bell,
   AlertCircle,
@@ -13,8 +14,45 @@ import {
 } from 'lucide-react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 
+// Workaround for eslint `no-unused-vars` false-positive with `<motion.div>` JSX usage.
+const _motion = motion;
+
+// Format backend createdAt into user-friendly relative time.
+const formatTime = (dateInput) => {
+  if (!dateInput) return 'Just now';
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return 'Just now';
+
+  const now = new Date();
+  const diffInMs = now - date;
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+  if (diffInDays === 1) return 'Yesterday';
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+
+  return date.toLocaleDateString();
+};
+
+const extractIssueIdFromLink = (link) => {
+  if (!link || typeof link !== 'string') return null;
+  const parts = link.split('/').filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : null;
+};
+
 // Notification Type Icons and Colors
 const notificationConfig = {
+  assignment: {
+    icon: Bell,
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    iconColor: 'text-blue-600',
+    badge: 'bg-blue-100 text-blue-700',
+    label: 'New Assignment',
+  },
   status_update: {
     icon: Clock,
     bgColor: 'bg-blue-50',
@@ -30,6 +68,22 @@ const notificationConfig = {
     iconColor: 'text-emerald-600',
     badge: 'bg-emerald-100 text-emerald-700',
     label: 'Resolved',
+  },
+  escalation: {
+    icon: AlertCircle,
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
+    iconColor: 'text-orange-600',
+    badge: 'bg-orange-100 text-orange-700',
+    label: 'Escalated',
+  },
+  system: {
+    icon: AlertCircle,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-200',
+    iconColor: 'text-slate-600',
+    badge: 'bg-slate-100 text-slate-700',
+    label: 'System Alert',
   },
   feedback: {
     icon: Bell,
@@ -49,105 +103,73 @@ const notificationConfig = {
   },
 };
 
-// Dummy notification data for citizens
-const DUMMY_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: 'status_update',
-    title: 'Complaint Status Updated',
-    message: 'Your complaint about pothole on Main Street has been assigned to an officer.',
-    issueId: 'COMP-001',
-    time: '2 hours ago',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    isRead: false,
-  },
-  {
-    id: 2,
-    type: 'resolved',
-    title: 'Complaint Resolved',
-    message: 'Your complaint about street light repair has been successfully resolved.',
-    issueId: 'COMP-002',
-    time: '1 day ago',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    isRead: false,
-  },
-  {
-    id: 3,
-    type: 'feedback',
-    title: 'Feedback Requested',
-    message: 'Please provide feedback on the resolution of your drainage issue complaint.',
-    issueId: 'COMP-003',
-    time: '3 days ago',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    isRead: true,
-  },
-  {
-    id: 4,
-    type: 'status_update',
-    title: 'Complaint In Progress',
-    message: 'Officer has started working on your graffiti removal complaint.',
-    issueId: 'COMP-004',
-    time: '5 days ago',
-    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    isRead: true,
-  },
-  {
-    id: 5,
-    type: 'alert',
-    title: 'Complaint Update',
-    message: 'Additional information is needed for your complaint. Please check the details.',
-    issueId: 'COMP-005',
-    time: '1 week ago',
-    timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    isRead: true,
-  },
-  {
-    id: 6,
-    type: 'resolved',
-    title: 'Complaint Resolved',
-    message: 'Your complaint about road maintenance has been completed successfully.',
-    issueId: 'COMP-006',
-    time: '1 week ago',
-    timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    isRead: true,
-  },
-  {
-    id: 7,
-    type: 'status_update',
-    title: 'New Assignment',
-    message: 'Your complaint has been assigned to Officer Sharma for investigation.',
-    issueId: 'COMP-007',
-    time: '2 weeks ago',
-    timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    isRead: true,
-  },
-  {
-    id: 8,
-    type: 'feedback',
-    title: 'Rate Your Experience',
-    message: 'Help us improve by rating your experience with the complaint resolution process.',
-    issueId: 'COMP-008',
-    time: '2 weeks ago',
-    timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    isRead: true,
-  },
-];
-
 export default function CitizenNotifications() {
-  const [notifications, setNotifications] = useState(DUMMY_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const readCount = notifications.filter((n) => n.isRead).length;
 
-  const handleMarkAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif))
-    );
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await citizenAPI.getNotifications();
+      if (!response?.data?.success) {
+        setError(response?.data?.message || 'Failed to fetch notifications');
+        return;
+      }
+
+      const data = response.data.data || [];
+      const formattedNotifications = data.map((notif) => ({
+        id: notif._id,
+        title: notif.message,
+        type: notif.type,
+        isRead: notif.isRead,
+        time: formatTime(notif.createdAt),
+        link: notif.link,
+      }));
+
+      setNotifications(formattedNotifications);
+    } catch (err) {
+      console.error('Error fetching citizen notifications:', err);
+      setError('Failed to load notifications. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleMarkAllAsRead = () => {
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const handleMarkAsRead = async (id) => {
+    // Optimistic update
+    setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif)));
+    try {
+      await citizenAPI.markNotificationRead(id);
+    } catch (err) {
+      // If backend fails, refetch to avoid inconsistent UI
+      console.error('Error marking notification read:', err);
+      fetchNotifications();
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const unread = notifications.filter((n) => !n.isRead).map((n) => n.id);
+    if (!unread.length) return;
+
+    // Optimistic update
     setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+
+    try {
+      await Promise.allSettled(unread.map((id) => citizenAPI.markNotificationRead(id)));
+    } catch (err) {
+      console.error('Error marking all notifications read:', err);
+      fetchNotifications();
+    }
   };
 
   const handleDelete = (id) => {
@@ -178,6 +200,12 @@ export default function CitizenNotifications() {
           </div>
         </div>
 
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700 font-semibold">{error}</p>
+          </div>
+        ) : null}
+
         {/* Action Buttons */}
         <div className="flex gap-3 flex-wrap">
           {unreadCount > 0 && (
@@ -203,7 +231,15 @@ export default function CitizenNotifications() {
 
         {/* Notifications List */}
         <div className="space-y-3">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-12 bg-slate-50 rounded-lg"
+            >
+              <p className="text-slate-600 text-lg font-medium">Loading notifications...</p>
+            </motion.div>
+          ) : notifications.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -215,7 +251,7 @@ export default function CitizenNotifications() {
             </motion.div>
           ) : (
             notifications.map((notif, index) => {
-              const config = notificationConfig[notif.type];
+              const config = notificationConfig[notif.type] || notificationConfig.system;
               const Icon = config.icon;
               const isExpanded = expandedId === notif.id;
 
@@ -243,7 +279,7 @@ export default function CitizenNotifications() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-slate-900">{notif.title}</h3>
+                            <h3 className="font-semibold text-slate-900">{config.label}</h3>
                             {!notif.isRead && (
                               <motion.span
                                 animate={{ scale: [1, 1.2, 1] }}
@@ -253,10 +289,10 @@ export default function CitizenNotifications() {
                             )}
                           </div>
                           <p className="text-sm text-slate-600 mt-1 line-clamp-2">
-                            {notif.message}
+                            {notif.title}
                           </p>
                           <div className="flex gap-3 mt-2 text-xs text-slate-500">
-                            <span>Issue: {notif.issueId}</span>
+                            <span>Issue: {extractIssueIdFromLink(notif.link) || '-'}</span>
                             <span>•</span>
                             <span>{notif.time}</span>
                           </div>

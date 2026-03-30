@@ -164,10 +164,10 @@ export const getAllComplaints = async (req, res) => {
  */
 export const assignOfficerToComplaint = async (req, res) => {
   try {
-    const { complaintId } = req.params;
-    const { officerId } = req.body;
-    if (!officerId) {
-      return res.status(400).json({ success: false, message: 'Officer ID required' });
+    const complaintId = req.params.complaintId || req.params.id;
+    const { officerId: officerIdInput } = req.body;
+    if (!officerIdInput) {
+      return res.status(400).json({ success: false, message: 'officerId required (format: OFF-XXXX)' });
     }
 
     const complaint = await Complaint.findOne({ $or: [{ issueId: complaintId }, { _id: complaintId }] });
@@ -175,21 +175,40 @@ export const assignOfficerToComplaint = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Complaint not found' });
     }
 
-    const previousOfficerId = complaint.assignedOfficer; // may be null
+    // Find officer by the human readable officerId (OFF-XXXX)
+    const officer = await Officer.findOne({ officerId: officerIdInput });
+    if (!officer) {
+      return res.status(404).json({ success: false, message: 'Officer not found for given officerId' });
+    }
+
+    const previousOfficerId = complaint.assignedOfficer; // may be null (Mongo _id)
+    const nextOfficerMongoId = officer._id; // Mongo _id used for references
 
     // Update complaint with new officer assignment
-    complaint.assignedOfficer = officerId;
+    complaint.assignedOfficer = nextOfficerMongoId;
     await complaint.save();
 
     // Update officers load counts
-    if (previousOfficerId && previousOfficerId.toString() !== officerId.toString()) {
+    if (previousOfficerId && previousOfficerId.toString() !== nextOfficerMongoId.toString()) {
       await Officer.findByIdAndUpdate(previousOfficerId, { $inc: { complaintsAssigned: -1 } });
     }
-    await Officer.findByIdAndUpdate(officerId, { $inc: { complaintsAssigned: 1 } });
+
+    // Only increment load count if the officer actually changed
+    if (!previousOfficerId || previousOfficerId.toString() !== nextOfficerMongoId.toString()) {
+      await Officer.findByIdAndUpdate(nextOfficerMongoId, { $inc: { complaintsAssigned: 1 } });
+    }
 
     const populatedComplaint = await Complaint.findById(complaint._id).populate('assignedOfficer', 'name email department');
 
-    res.status(200).json({ success: true, message: 'Officer assigned', complaint: populatedComplaint });
+    // Create notification for the assigned officer
+    await Notification.create({
+      officer: nextOfficerMongoId,
+      type: 'assignment',
+      message: `New complaint assigned: ${complaint.title} in ${complaint.category} category.`,
+      link: `/officer/complaints/${complaint._id}`,
+    });
+
+    res.status(200).json({ success: true, message: 'Complaint assigned to officer', complaint: populatedComplaint });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to assign officer', error: error.message });
   }
@@ -201,6 +220,55 @@ export const assignOfficerToComplaint = async (req, res) => {
  * @access Private/Admin
  */
 let autoAssignRun = false;
+
+// Smart auto-assignment helper:
+// - "Area match" uses `complaint.category` matched against `officer.department` (schema field mapping).
+// - Workload is the count of active complaints where `status != "Resolved"`.
+// - If no officers match the complaint area, fall back to all officers.
+// - Tie-break: choose the first after sorting by workload, then officerId.
+const smartAssignOfficer = async (complaint) => {
+  const complaintArea = complaint?.area || complaint?.category;
+
+  let officersInArea = [];
+  if (complaintArea) {
+    officersInArea = await Officer.find({ department: complaintArea }).lean();
+  }
+
+  // Edge: If no officer exists in the area -> use any available officer
+  const candidateOfficers = officersInArea.length ? officersInArea : await Officer.find().lean();
+  if (!candidateOfficers.length) return null;
+
+  const workload = await Promise.all(
+    candidateOfficers.map(async (officer) => {
+      const activeCount = await Complaint.countDocuments({
+        assignedOfficer: officer._id,
+        status: { $ne: 'Resolved' },
+      });
+      return { officer, activeCount };
+    })
+  );
+
+  // Workload limit: each officer can take max 10 active complaints.
+  // If an officer has >= 10 active complaints, skip them for selection.
+  const MAX_ACTIVE = 10;
+  const notOverloaded = workload.filter((w) => w.activeCount < MAX_ACTIVE);
+
+  const effectiveCandidates = notOverloaded.length ? notOverloaded : workload; // If all overloaded, pick least loaded anyway
+
+  effectiveCandidates.sort(
+    (a, b) =>
+      a.activeCount - b.activeCount ||
+      String(a.officer.officerId || '').localeCompare(String(b.officer.officerId || ''))
+  );
+
+  const chosen = effectiveCandidates[0]?.officer;
+  if (!chosen) return null;
+
+  return {
+    assignedOfficer: chosen.name,
+    officerId: chosen.officerId,
+  };
+};
 
 export const autoAssignCategoryComplaints = async (req, res) => {
   try {
@@ -224,13 +292,20 @@ export const autoAssignCategoryComplaints = async (req, res) => {
     const details = [];
 
     for (const complaint of unassignedComplaints) {
-      let officer = await Officer.findOne({ department: complaint.category }).sort({ complaintsAssigned: 1 }).lean();
-      if (!officer) {
-        officer = await Officer.findOne({}).sort({ complaintsAssigned: 1 }).lean();
+      const smart = await smartAssignOfficer(complaint);
+      if (!smart?.officerId) {
+        details.push({ issueId: complaint.issueId || complaint._id, assigned: false, reason: 'No available officers' });
+        continue;
       }
 
+      // Fetch officer document by officerId
+      const officer = await Officer.findOne({ officerId: smart.officerId });
       if (!officer) {
-        details.push({ issueId: complaint.issueId || complaint._id, assigned: false, reason: 'No available officers' });
+        details.push({
+          issueId: complaint.issueId || complaint._id,
+          assigned: false,
+          reason: 'Officer not found for generated officerId',
+        });
         continue;
       }
 
@@ -308,9 +383,9 @@ export const escalateComplaint = async (req, res) => {
     if (complaint.citizen) {
       await Notification.create({
         citizen: complaint.citizen,
-        type: 'alert',
+        type: 'escalation',
         message: `Your complaint ${complaint.issueId || complaint._id} has been escalated to level ${newLevel}.`,
-        link: `/citizen/track/${complaint._id}`,
+        link: `/citizen/track/${complaint.issueId || complaint._id}`,
       });
     }
 
@@ -497,27 +572,79 @@ export const createOfficer = async (req, res) => {
       });
     }
 
-    // Create new officer
-    const newOfficer = new Officer({
-      name,
-      email,
-      password,
-      department,
-      phone,
-      role: 'Officer',
-    });
+    const generateNextOfficerId = async () => {
+      // Find the max numeric suffix from existing OFF-XXXX IDs.
+      // Works even if officers are deleted, because we always increment from the current max.
+      const result = await Officer.aggregate([
+        { $match: { officerId: { $regex: '^OFF-\\d{4}$' } } },
+        {
+          $addFields: {
+            num: {
+              $toInt: {
+                $arrayElemAt: [{ $split: ['$officerId', '-'] }, 1],
+              },
+            },
+          },
+        },
+        { $sort: { num: -1 } },
+        { $limit: 1 },
+        { $project: { num: 1 } },
+      ]);
 
-    await newOfficer.save();
+      const lastNum = result?.[0]?.num;
+      const nextNum = (typeof lastNum === 'number' ? lastNum + 1 : 1001);
 
-    res.status(201).json({
-      success: true,
-      message: 'Officer created successfully',
-      data: {
-        id: newOfficer._id,
-        name: newOfficer.name,
-        email: newOfficer.email,
-        department: newOfficer.department,
-      },
+      if (nextNum > 9999) {
+        throw new Error('OfficerId limit reached (max OFF-9999).');
+      }
+
+      return `OFF-${String(nextNum).padStart(4, '0')}`;
+    };
+
+    // Retry on duplicate officerId (possible if two admins create at the same time)
+    let lastDuplicateError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const officerId = await generateNextOfficerId();
+
+      // Create new officer
+      const newOfficer = new Officer({
+        officerId,
+        name,
+        email,
+        password,
+        department,
+        phone,
+        role: 'Officer',
+      });
+
+      try {
+        await newOfficer.save();
+
+        return res.status(201).json({
+          success: true,
+          message: 'Officer created successfully',
+          data: {
+            id: newOfficer._id,
+            officerId: newOfficer.officerId,
+            name: newOfficer.name,
+            email: newOfficer.email,
+            department: newOfficer.department,
+          },
+        });
+      } catch (error) {
+        // Mongo unique key violation
+        if (error?.code === 11000) {
+          lastDuplicateError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    return res.status(409).json({
+      success: false,
+      message: 'Failed to create officer due to officerId duplication. Please try again.',
+      error: lastDuplicateError?.message,
     });
   } catch (error) {
     console.error('Error creating officer:', error.message);

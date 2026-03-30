@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog } from "@headlessui/react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Plus, Edit, Trash, X, Download } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -128,18 +128,18 @@ export default function AdminCategoryDashboard() {
     e.preventDefault();
     setSaving(true);
     if (editCategory) {
-      await api.edit(editCategory._id, form);
+      await categoryAPI.edit(editCategory._id, form);
     } else {
-      await api.add(form);
+      await categoryAPI.add(form);
     }
     setSaving(false);
     closeModal();
-    api.getAll().then(res => setCategories(res.data.data));
+    categoryAPI.getAll().then(res => setCategories(res.data.data));
   };
   const handleDelete = async (cat) => {
     if (!window.confirm(`Delete category '${cat.name}'?`)) return;
-    await api.delete(cat._id);
-    api.getAll().then(res => setCategories(res.data.data));
+    await categoryAPI.delete(cat._id);
+    categoryAPI.getAll().then(res => setCategories(res.data.data));
   };
 
   // Export report UI
@@ -258,10 +258,10 @@ export default function AdminCategoryDashboard() {
           )}
         </div>
         {/* Add/Edit Category Modal */}
-        <Dialog open={modalOpen} onClose={closeModal} className="fixed z-50 inset-0 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen">
+        <Dialog.Root open={modalOpen} onOpenChange={(open) => !open && closeModal()}>
+          <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
-            <div className="bg-white rounded-lg shadow-lg p-6 z-10 w-full max-w-md relative">
+            <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative" aria-describedby={undefined}>
               <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={closeModal}><X /></button>
               <Dialog.Title className="text-xl font-bold mb-4 uppercase tracking-widest">
                 {editCategory ? "Edit Category" : "Add Category"}
@@ -288,9 +288,9 @@ export default function AdminCategoryDashboard() {
                   {saving ? "Saving..." : (editCategory ? "Update Category" : "Add Category")}
                 </button>
               </form>
-            </div>
-          </div>
-        </Dialog>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
       </div>
     </DashboardLayout>
   );

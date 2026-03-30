@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { officerLogin, getOfficerProfile } from '../controller/loginController.js';
 import { getComplaintsForOfficer, updateComplaintStatus, getOfficerPerformance } from '../controller/complaintController.js';
+import { getOfficerNotifications, markOfficerNotificationRead, markAllOfficerNotificationsRead } from '../controller/officerNotificationController.js';
 import { verifyOfficerToken } from '../middleware/authAdmin.js';
 
 const router = express.Router();
@@ -29,5 +30,10 @@ router.put("/complaints/:complaintId/status", verifyOfficerToken, upload.single(
 
 // Performance analytics route
 router.get("/performance", verifyOfficerToken, getOfficerPerformance);
+
+// Notification routes
+router.get("/notifications", verifyOfficerToken, getOfficerNotifications);
+router.put("/notifications/:id/read", verifyOfficerToken, markOfficerNotificationRead);
+router.put("/notifications/read-all", verifyOfficerToken, markAllOfficerNotificationsRead);
 
 export default router;

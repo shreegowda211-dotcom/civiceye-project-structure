@@ -2,7 +2,7 @@ import express from 'express';
 import { citizenRegister, submitFeedback, getFeedback } from '../controller/citizenController.js';
 import { citizenLogin, getProfile, updateProfile } from '../controller/loginController.js';
 import { createComplaint, getComplaintsByCitizen, getComplaintById } from '../controller/complaintController.js';
-import { getNotifications, markNotificationRead } from '../controller/notificationController.js';
+import { getNotifications, markNotificationRead } from '../controller/citizenNotificationController.js';
 import { verifyCitizenToken } from '../middleware/authAdmin.js';
 import multer from "multer";
 

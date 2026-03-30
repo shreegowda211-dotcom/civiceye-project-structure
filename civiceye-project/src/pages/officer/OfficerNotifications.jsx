@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -11,12 +11,36 @@ import {
   Clock,
   Trash2,
   Check,
+  RefreshCw,
+  Loader,
 } from 'lucide-react';
 import Breadcrumb from '@/components/common/Breadcrumb';
+import { officerAPI } from '@/services/api';
+
+// Alias motion.div so ESLint counts it as a used identifier
+const MotionDiv = motion.div;
+
+// Time formatting utility
+const formatTime = (dateString) => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInMs = now - date;
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  if (diffInDays === 1) return 'Yesterday';
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+
+  return date.toLocaleDateString();
+};
 
 // Notification Type Icons and Colors
 const notificationConfig = {
-  assigned: {
+  assignment: {
     icon: Bell,
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
@@ -24,15 +48,32 @@ const notificationConfig = {
     badge: 'bg-blue-100 text-blue-700',
     label: 'New Assignment',
   },
-  updated: {
+  status_update: {
+    icon: Clock,
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    iconColor: 'text-blue-600',
+    badge: 'bg-blue-100 text-blue-700',
+    label: 'Status Update',
+  },
+  resolved: {
     icon: CheckCircle2,
     bgColor: 'bg-emerald-50',
     borderColor: 'border-emerald-200',
     iconColor: 'text-emerald-600',
     badge: 'bg-emerald-100 text-emerald-700',
-    label: 'Update',
+    label: 'Resolved',
   },
-  escalated: {
+  // Backward compatibility for older saved documents
+  update: {
+    icon: Clock,
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    iconColor: 'text-blue-600',
+    badge: 'bg-blue-100 text-blue-700',
+    label: 'Status Update',
+  },
+  escalation: {
     icon: ArrowUpCircle,
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-200',
@@ -50,267 +91,201 @@ const notificationConfig = {
   },
 };
 
-// Static notification data
-const DUMMY_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: 'assigned',
-    title: 'New Complaint Assigned',
-    message: 'A new pothole complaint has been assigned to you in Bandra West.',
-    issueId: 'ISS26001',
-    time: '2 hours ago',
-    isRead: false,
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-  },
-  {
-    id: 2,
-    type: 'updated',
-    title: 'Complaint Status Updated',
-    message: 'Your complaint ISS26098 status has been updated to "In Progress".',
-    issueId: 'ISS26098',
-    time: '5 hours ago',
-    isRead: false,
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-  },
-  {
-    id: 3,
-    type: 'escalated',
-    title: 'Complaint Escalated',
-    message: 'A critical issue regarding water leakage has been escalated to admin.',
-    issueId: 'ISS26087',
-    time: '1 day ago',
-    isRead: true,
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 4,
-    type: 'system',
-    title: 'System Maintenance',
-    message: 'The system will undergo maintenance on Sunday 12:00 AM - 2:00 AM IST.',
-    issueId: null,
-    time: '1 day ago',
-    isRead: true,
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 5,
-    type: 'assigned',
-    title: 'New Complaint Assigned',
-    message: 'A garbage disposal complaint has been assigned in Dadar East.',
-    issueId: 'ISS26105',
-    time: '2 days ago',
-    isRead: true,
-    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
-  },
-  {
-    id: 6,
-    type: 'updated',
-    title: 'Complaint Resolved',
-    message: 'Your complaint ISS26045 has been marked as "Resolved". Great work!',
-    issueId: 'ISS26045',
-    time: '3 days ago',
-    isRead: true,
-    timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000),
-  },
-  {
-    id: 7,
-    type: 'escalated',
-    title: 'Multiple Complaints Escalated',
-    message: 'You have 3 complaints pending action for more than 5 days.',
-    issueId: null,
-    time: '3 days ago',
-    isRead: true,
-    timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000),
-  },
-  {
-    id: 8,
-    type: 'assigned',
-    title: 'New Complaint Assigned',
-    message: 'A streetlight issue has been assigned in Fort area.',
-    issueId: 'ISS26110',
-    time: '4 days ago',
-    isRead: true,
-    timestamp: new Date(Date.now() - 96 * 60 * 60 * 1000),
-  },
-];
-
 export default function OfficerNotifications() {
-  const [notifications, setNotifications] = useState(DUMMY_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mark single notification as read
-  const handleMarkAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  // Fetch notifications on component mount
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await officerAPI.getNotifications();
+      if (response.data.success) {
+        setNotifications(response.data.notifications || []);
+      } else {
+        setError('Failed to fetch notifications');
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError('Failed to load notifications. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Mark all as read
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notif) => ({ ...notif, isRead: true }))
-    );
-  };
+  // Refresh notifications when returning to this tab/window.
+  useEffect(() => {
+    const maybeRefresh = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    };
 
-  // Delete notification
-  const handleDeleteNotification = (id) => {
-    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
-  };
+    window.addEventListener('focus', maybeRefresh);
+    document.addEventListener('visibilitychange', maybeRefresh);
 
-  // Delete all read notifications
-  const handleDeleteAllRead = () => {
-    setNotifications((prev) => prev.filter((notif) => !notif.isRead));
-  };
+    return () => {
+      window.removeEventListener('focus', maybeRefresh);
+      document.removeEventListener('visibilitychange', maybeRefresh);
+    };
+  }, []);
 
   // Get unread count
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const readCount = notifications.filter((n) => n.isRead).length;
 
-  // Empty state
-  if (notifications.length === 0) {
-    return (
-      <DashboardLayout>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-          <div className="max-w-6xl mx-auto">
-            {/* Breadcrumb */}
-            <Breadcrumb
-              items={[
-                { label: 'Dashboard', href: '/officer/dashboard' },
-                { label: 'Notifications', current: true },
-              ]}
-            />
+  // Handle mark as read
+  const handleMarkAsRead = async (id) => {
+    try {
+      await officerAPI.markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif))
+      );
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+      // Still update UI optimistically
+      setNotifications((prev) =>
+        prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif))
+      );
+    }
+  };
 
-            {/* Header */}
-            <motion.header
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8 mt-6"
-            >
-              <h1 className="text-4xl font-bold text-white mb-2">Notifications</h1>
-              <p className="text-slate-400">Stay updated with complaint activities</p>
-            </motion.header>
+  // Handle mark all as read
+  const handleMarkAllAsRead = async () => {
+    try {
+      await officerAPI.markAllNotificationsAsRead();
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
+      // Still update UI optimistically
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+    }
+  };
 
-            {/* Empty State */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-20"
-            >
-              <Bell className="h-16 w-16 text-slate-500 mb-4" />
-              <h2 className="text-2xl font-semibold text-white mb-2">No notifications yet</h2>
-              <p className="text-slate-400">You're all caught up! Check back later.</p>
-            </motion.div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Toggle expand
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Breadcrumb */}
-          <Breadcrumb
-            items={[
-              { label: 'Dashboard', href: '/officer/dashboard' },
-              { label: 'Notifications', current: true },
-            ]}
-          />
+      <div className="p-6 space-y-6 max-w-6xl">
+        <Breadcrumb
+          items={[
+            { label: 'Dashboard', href: '/officer/dashboard' },
+            { label: 'Notifications', current: true },
+          ]}
+        />
 
-          {/* Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 mt-6 flex items-start justify-between"
-          >
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Notifications</h1>
-              <p className="text-slate-400">Stay updated with complaint activities</p>
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Notifications</h1>
+            <p className="text-slate-600 mt-1">Stay updated with complaint activities</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+            <p className="text-sm font-semibold text-blue-900">Unread: {unreadCount}</p>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center gap-3">
+              <Loader className="h-6 w-6 animate-spin text-blue-600" />
+              <p className="text-slate-600">Loading notifications...</p>
             </div>
+          </div>
 
-            {/* Action Buttons */}
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  className="px-3 py-1 bg-red-500/20 border border-red-400/30 rounded-full text-red-300 text-xs font-semibold"
-                >
-                  {unreadCount} New
-                </motion.span>
-              )}
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-700">{error}</p>
             </div>
-          </motion.div>
+            <Button
+              onClick={fetchNotifications}
+              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium"
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
 
-          {/* Controls */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="flex gap-2 mb-6"
+        {/* Action Buttons */}
+        {!isLoading && !error && (
+        <div className="flex gap-3 flex-wrap">
+          {unreadCount > 0 && (
+            <Button
+              onClick={handleMarkAllAsRead}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
+            >
+              <Check className="h-4 w-4" />
+              Mark All as Read
+            </Button>
+          )}
+
+          <Button
+            onClick={fetchNotifications}
+            className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
           >
-            {unreadCount > 0 && (
-              <Button
-                onClick={handleMarkAllAsRead}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
-              >
-                <Check className="h-4 w-4" />
-                Mark All as Read
-              </Button>
-            )}
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
 
-            {notifications.some((n) => n.isRead) && (
-              <Button
-                onClick={handleDeleteAllRead}
-                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-all"
-              >
-                <Trash2 className="h-4 w-4" />
-                Clear Read
-              </Button>
-            )}
-          </motion.div>
+        )}
 
-          {/* Notifications List */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-3"
-          >
-            {notifications.map((notification, index) => {
-              const config = notificationConfig[notification.type];
+        {/* Notifications List */}
+        <div className="space-y-3">
+          {notifications.length === 0 ? (
+            <div className="text-center py-12">
+              <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No notifications yet</h3>
+              <p className="text-slate-600">You'll see notifications here when complaints are assigned to you or updated.</p>
+            </div>
+          ) : (
+            notifications.map((notification, index) => {
+              const config = notificationConfig[notification.type] || notificationConfig.system;
               const Icon = config.icon;
-              const isExpanded = expandedId === notification.id;
+              const isExpanded = expandedId === notification._id;
 
               return (
-                <motion.div
-                  key={notification.id}
+                <MotionDiv
+                  key={notification._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className={`border-2 rounded-lg transition-all duration-300 ${
                     notification.isRead
                       ? `${config.bgColor} ${config.borderColor}`
-                      : `bg-white border-emerald-400 shadow-lg shadow-emerald-500/10`
+                      : `bg-white border-blue-400 shadow-lg shadow-blue-500/10`
                   }`}
                 >
                   <div
-                    onClick={() => setExpandedId(isExpanded ? null : notification.id)}
+                    onClick={() => toggleExpand(notification._id)}
                     className="p-4 cursor-pointer"
                   >
                     <div className="flex items-start gap-4">
                       {/* Icon */}
                       <div
                         className={`flex-shrink-0 p-2 rounded-lg ${
-                          notification.isRead ? config.badge : 'bg-emerald-100'
+                          notification.isRead ? config.badge : 'bg-blue-100'
                         }`}
                       >
                         <Icon
                           className={`h-6 w-6 ${
-                            notification.isRead ? config.iconColor : 'text-emerald-600'
+                            notification.isRead ? config.iconColor : 'text-blue-600'
                           }`}
                         />
                       </div>
@@ -321,13 +296,18 @@ export default function OfficerNotifications() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-slate-900">
-                                {notification.title}
+                                {notification.type === 'assignment' ? 'New Assignment' :
+                                 notification.type === 'status_update' ? 'Status Update' :
+                                 notification.type === 'resolved' ? 'Complaint Resolved' :
+                                 notification.type === 'update' ? 'Status Update' :
+                                 notification.type === 'escalation' ? 'Escalated Complaint' :
+                                 'System Notification'}
                               </h3>
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${config.badge}`}>
                                 {config.label}
                               </span>
                               {!notification.isRead && (
-                                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
                               )}
                             </div>
                             <p className="text-slate-600 text-sm line-clamp-2">
@@ -336,21 +316,9 @@ export default function OfficerNotifications() {
                             <div className="flex items-center gap-4 mt-2">
                               <span className="text-xs text-slate-500 flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {notification.time}
+                                {formatTime(notification.createdAt)}
                               </span>
-                              {notification.issueId && (
-                                <span className="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
-                                  {notification.issueId}
-                                </span>
-                              )}
                             </div>
-                          </div>
-
-                          {/* Status Indicator */}
-                          <div className="flex items-center gap-2">
-                            {!notification.isRead && (
-                              <span className="h-3 w-3 rounded-full bg-emerald-500" />
-                            )}
                           </div>
                         </div>
                       </div>
@@ -358,7 +326,7 @@ export default function OfficerNotifications() {
 
                     {/* Expanded Actions */}
                     {isExpanded && (
-                      <motion.div
+                      <MotionDiv
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
@@ -368,53 +336,39 @@ export default function OfficerNotifications() {
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleMarkAsRead(notification.id);
+                              handleMarkAsRead(notification._id);
                             }}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded font-medium text-sm transition-all"
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded font-medium text-sm transition-all"
                           >
                             Mark as Read
                           </Button>
                         )}
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteNotification(notification.id);
-                          }}
-                          className="flex-1 bg-red-600/20 hover:bg-red-600/30 text-red-600 px-3 py-2 rounded font-medium text-sm transition-all border border-red-400/30"
-                        >
-                          Delete
-                        </Button>
-                      </motion.div>
+                        {/* No delete/dismiss for real notifications */}
+                      </MotionDiv>
                     )}
                   </div>
-                </motion.div>
+                </MotionDiv>
               );
-            })}
-          </motion.div>
-
-          {/* Stats Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 p-4 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm"
-          >
-            <div className="flex justify-between text-sm text-slate-400">
-              <div>
-                <span className="font-semibold text-white">{notifications.length}</span> total
-                notifications
-              </div>
-              <div>
-                <span className="font-semibold text-emerald-400">{unreadCount}</span> unread
-              </div>
-              <div>
-                <span className="font-semibold text-slate-300">
-                  {notifications.filter((n) => n.isRead).length}
-                </span>{' '}
-                read
-              </div>
+            })
+          )}
+        </div>
+        {/* Stats Footer */}
+        <div className="mt-8 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+          <div className="flex justify-between text-sm text-slate-600">
+            <div>
+              <span className="font-semibold text-slate-900">{notifications.length}</span> total
+              notifications
             </div>
-          </motion.div>
+            <div>
+              <span className="font-semibold text-blue-600">{unreadCount}</span> unread
+            </div>
+            <div>
+              <span className="font-semibold text-slate-500">
+                {readCount}
+              </span>{' '}
+              read
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>

@@ -5,9 +5,10 @@ import { adminAPI } from '@/services/api';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import Table from '@/components/table';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, Filter, UserPlus, RefreshCw, AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, UserPlus, RefreshCw, AlertTriangle, ArrowUpRight, Loader2, X } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
+import * as Dialog from "@radix-ui/react-dialog";
 
 // TODO: Import/implement OfficerAssignModal, EscalateModal, etc.
 
@@ -22,6 +23,14 @@ export default function AdminAllIssues() {
     dateTo: '',
   });
   const [expandedRow, setExpandedRow] = useState(null);
+
+  // Assign officer modal (UI only)
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignMode, setAssignMode] = useState('assign'); // 'assign' | 'reassign'
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [officerIdInput, setOfficerIdInput] = useState('');
+  const [officerIdError, setOfficerIdError] = useState('');
+  const [assigning, setAssigning] = useState(false);
 
   // Fetch all complaints (with backend filters)
   const { data: complaints = [], isLoading, refetch } = useQuery({
@@ -63,38 +72,17 @@ export default function AdminAllIssues() {
     });
   }, [complaints, filters]);
 
+  // Smart auto-assign UI (UI only, no API integration yet)
+  const [smartAutoAssigning, setSmartAutoAssigning] = useState(false);
+  const [smartAutoAssignPreview, setSmartAutoAssignPreview] = useState(null);
+
   // Actions (integrate with backend)
-  const assignMutation = useMutation({
-    mutationFn: ({ complaintId, officerId }) => adminAPI.assignOfficer(complaintId, officerId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-complaints']);
-      refetch();
-    },
-  });
   const urgentMutation = useMutation({
     mutationFn: (complaintId) => adminAPI.markUrgent(complaintId),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-complaints']);
       queryClient.invalidateQueries(['admin-escalated-complaints']);
       refetch();
-    },
-  });
-  const autoAssignMutation = useMutation({
-    mutationFn: () => adminAPI.autoAssignByCategory(),
-    onSuccess: (data) => {
-      refetch();
-      if (data?.data?.success) {
-        const assignedCount = data.data.assignedCount ?? 0;
-        const totalChecked = data.data.totalChecked ?? 0;
-        alert(`Auto-assign completed. Assigned: ${assignedCount}, checked: ${totalChecked}.`);
-      } else {
-        alert(data?.data?.message || 'Auto-assign completed with no assignments.');
-      }
-    },
-    onError: (error) => {
-      console.error(error);
-      const errorMsg = error?.response?.data?.message || 'Auto-assign failed. Check console for details.';
-      alert(errorMsg);
     },
   });
 
@@ -107,17 +95,48 @@ export default function AdminAllIssues() {
     },
   });
 
-  // Example: open assign modal, then call assignMutation.mutate({ complaintId, officerId })
-  const handleAssign = (complaint) => {
-    const chosenOfficer = window.prompt('Enter officer ID to assign (MongoDB _id):');
-    if (!chosenOfficer) return;
-    assignMutation.mutate({ complaintId: complaint._id, officerId: chosenOfficer });
+  const normalizeOfficerId = (v) => (typeof v === 'string' ? v.trim().toUpperCase() : '');
+  const validateOfficerId = (v) => {
+    const val = normalizeOfficerId(v);
+    if (!val) return 'Enter Officer ID';
+    if (!val.startsWith('OFF-')) return 'Officer ID must start with OFF-';
+    if (!/^OFF-\d+$/.test(val)) return 'Officer ID must be in the form OFF-XXXX';
+    return '';
   };
-  const handleReassign = (complaint) => {
-    const chosenOfficer = window.prompt('Enter officer ID to reassign:', complaint.assignedOfficer?._id || '');
-    if (!chosenOfficer) return;
-    assignMutation.mutate({ complaintId: complaint._id, officerId: chosenOfficer });
+
+  const openAssignModal = (complaint, mode) => {
+    setSelectedComplaint(complaint);
+    setAssignMode(mode);
+    setOfficerIdInput('');
+    setOfficerIdError('');
+    setAssigning(false);
+    setAssignModalOpen(true);
   };
+
+  const closeAssignModal = () => {
+    setAssignModalOpen(false);
+    setSelectedComplaint(null);
+    setOfficerIdInput('');
+    setOfficerIdError('');
+    setAssigning(false);
+  };
+
+  // UI only: simulate assignment loading and do NOT call API yet.
+  const handleAssignSubmit = async (e) => {
+    e.preventDefault();
+    const err = validateOfficerId(officerIdInput);
+    setOfficerIdError(err);
+    if (err) return;
+
+    setAssigning(true);
+    // UI-only loading simulation
+    setTimeout(() => {
+      setAssigning(false);
+      closeAssignModal();
+      alert('Officer assignment prepared (UI only). Connect API later.');
+    }, 1200);
+  };
+
   const handleMarkUrgent = (complaint) => {
     if (complaint.urgent) {
       alert('Complaint is already marked as urgent.');
@@ -137,6 +156,32 @@ export default function AdminAllIssues() {
     }
   };
 
+  const handleSmartAutoAssignOfficer = () => {
+    if (smartAutoAssigning) return;
+    setSmartAutoAssigning(true);
+    setSmartAutoAssignPreview(null);
+
+    // UI-only: simulate loading and show current assigned officer info as preview.
+    window.setTimeout(() => {
+      const sample =
+        filteredComplaints.find((c) => c.assignedOfficer) || filteredComplaints[0] || null;
+
+      setSmartAutoAssignPreview(
+        sample
+          ? {
+              issueId: sample.issueId,
+              assignedOfficerName: sample.assignedOfficer?.name || 'Unassigned',
+              officerId:
+                sample.assignedOfficer?.officerId ||
+                sample.assignedOfficer?._id ||
+                '—',
+            }
+          : null
+      );
+      setSmartAutoAssigning(false);
+    }, 1400);
+  };
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -144,9 +189,49 @@ export default function AdminAllIssues() {
           <h1 className="text-2xl font-extrabold text-blue-900 tracking-widest uppercase">All Issues</h1>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setFilters({ area: '', category: '', status: '', dateFrom: '', dateTo: '' })}><Filter className="h-4 w-4 mr-1" /> Reset Filters</Button>
-            <Button variant="default" size="sm" onClick={() => autoAssignMutation.mutate()}>Auto-assign Unassigned</Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSmartAutoAssignOfficer}
+              disabled={smartAutoAssigning}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-300"
+              title="Smart auto-assign (UI preview only)"
+            >
+              {smartAutoAssigning ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Auto Assigning...
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-200 font-bold">✨</span>
+                  Auto Assign Officer
+                </span>
+              )}
+            </Button>
           </div>
         </div>
+
+        {smartAutoAssignPreview ? (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-emerald-900">Smart Auto Assign Preview</p>
+              <p className="mt-1 text-sm text-emerald-950 font-semibold">
+                Complaint: {smartAutoAssignPreview.issueId}
+              </p>
+              <p className="text-sm text-emerald-900">
+                Assigned Officer: {smartAutoAssignPreview.assignedOfficerName}
+              </p>
+              <p className="text-xs font-semibold text-emerald-900">
+                Officer ID: {smartAutoAssignPreview.officerId}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-800">UI only</p>
+            </div>
+          </div>
+        ) : null}
+
         {/* Filters UI */}
         <Card className="mb-4 border-blue-100 bg-blue-50/50">
           <CardContent className="flex flex-wrap gap-4 p-4 items-end">
@@ -208,8 +293,8 @@ export default function AdminAllIssues() {
                     <td className="px-4 py-3 text-slate-700 font-semibold">{complaint.assignedOfficer?.name || 'Unassigned'}</td>
                     <td className="px-4 py-3 text-slate-500 font-semibold tracking-wide">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 flex gap-2">
-                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => handleAssign(complaint)} title="Assign Officer" disabled={assignMutation.isLoading}><UserPlus className="h-4 w-4 text-blue-700" /></Button>
-                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => handleReassign(complaint)} title="Reassign" disabled={assignMutation.isLoading}><RefreshCw className="h-4 w-4 text-blue-700" /></Button>
+                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => openAssignModal(complaint, 'assign')} title="Assign Officer" disabled={assigning}><UserPlus className="h-4 w-4 text-blue-700" /></Button>
+                      <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => openAssignModal(complaint, 'reassign')} title="Reassign" disabled={assigning}><RefreshCw className="h-4 w-4 text-blue-700" /></Button>
                       <Button size="sm" variant="ghost" className="border border-amber-200 hover:bg-amber-50" onClick={() => handleMarkUrgent(complaint)} title="Mark Urgent" disabled={urgentMutation.isLoading || complaint.urgent}><AlertTriangle className="h-4 w-4 text-amber-500" /></Button>
                       <Button size="sm" variant="ghost" className="border border-rose-200 hover:bg-rose-50" onClick={() => handleEscalate(complaint)} title="Escalate" disabled={escalateMutation.isLoading || complaint.escalated}><ArrowUpRight className="h-4 w-4 text-rose-500" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => setExpandedRow(expandedRow === complaint._id ? null : complaint._id)}>{expandedRow === complaint._id ? <ChevronUp /> : <ChevronDown />}</Button>
@@ -232,6 +317,70 @@ export default function AdminAllIssues() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Assign/Reassign Officer Modal (UI only) */}
+      <Dialog.Root open={assignModalOpen} onOpenChange={(open) => { if (!open) closeAssignModal(); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl border border-slate-200 w-full max-w-md p-5">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <Dialog.Title className="text-lg font-bold text-blue-900 uppercase tracking-widest">
+                {assignMode === 'assign' ? 'Assign Officer' : 'Reassign Officer'}
+              </Dialog.Title>
+              <button type="button" onClick={closeAssignModal} className="p-1 rounded hover:bg-slate-100" aria-label="Close">
+                <X className="h-4 w-4 text-slate-700" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAssignSubmit}>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-blue-900 tracking-widest uppercase">
+                  Enter Officer ID
+                </label>
+                <input
+                  value={officerIdInput}
+                  onChange={(e) => {
+                    setOfficerIdInput(e.target.value);
+                    if (officerIdError) setOfficerIdError('');
+                  }}
+                  placeholder="OFF-1001"
+                  className="border border-blue-200 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400 font-semibold text-blue-900 bg-white placeholder:text-blue-300"
+                  autoFocus
+                />
+                {officerIdError ? (
+                  <p className="text-sm text-red-600 font-semibold">{officerIdError}</p>
+                ) : null}
+              </div>
+
+              <div className="flex gap-2 mt-5">
+                <Button type="button" variant="outline" onClick={closeAssignModal} disabled={assigning} className="w-full">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={assigning}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+                >
+                  {assigning ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Assigning...
+                    </span>
+                  ) : (
+                    'Assign'
+                  )}
+                </Button>
+              </div>
+
+              {selectedComplaint ? (
+                <p className="mt-3 text-xs text-slate-600">
+                  Complaint: {selectedComplaint.issueId}
+                </p>
+              ) : null}
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </DashboardLayout>
   );
 }

@@ -1,11 +1,16 @@
 import mongoose from 'mongoose';
 
 const notificationSchema = new mongoose.Schema({
-  citizen: { type: mongoose.Schema.Types.ObjectId, ref: 'citizen', required: true },
-  type: { type: String, enum: ['info', 'warning', 'alert', 'update'], default: 'info' },
+  citizen: { type: mongoose.Schema.Types.ObjectId, ref: 'citizen' },
+  officer: { type: mongoose.Schema.Types.ObjectId, ref: 'officer' },
+  type: {
+    type: String,
+    enum: ['assignment', 'status_update', 'resolved', 'escalation', 'system'],
+    default: 'system',
+  },
   message: { type: String, required: true },
   link: { type: String, default: '' },
-  read: { type: Boolean, default: false },
+  isRead: { type: Boolean, default: false },
 }, {
   timestamps: true,
 });

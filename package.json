@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@react-google-maps/api": "^2.20.8",
     "multer": "^2.1.1"
   },

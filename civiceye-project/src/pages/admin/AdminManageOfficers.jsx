@@ -19,6 +19,51 @@ function OfficerPerformanceBar({ score }) {
   );
 }
 
+function WorkloadIndicator({ count, maxCount }) {
+  const activeCount = typeof count === 'number' ? count : 0;
+  const max = Math.max(1, typeof maxCount === 'number' ? maxCount : 1);
+
+  // Thresholds (UI): low -> green, medium -> yellow, high -> red
+  const level = activeCount <= 2 ? 'low' : activeCount <= 5 ? 'medium' : 'high';
+
+  const badgeClasses =
+    level === 'low'
+      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+      : level === 'medium'
+        ? 'bg-amber-100 text-amber-800 border-amber-200'
+        : 'bg-rose-100 text-rose-800 border-rose-200';
+
+  const barClasses =
+    level === 'low'
+      ? 'bg-emerald-500'
+      : level === 'medium'
+        ? 'bg-amber-500'
+        : 'bg-rose-500';
+
+  const textClasses =
+    level === 'low'
+      ? 'text-emerald-700'
+      : level === 'medium'
+        ? 'text-amber-700'
+        : 'text-rose-700';
+
+  const pct = Math.min(100, Math.round((activeCount / max) * 100));
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${badgeClasses}`}>
+        {level === 'low' ? 'Low' : level === 'medium' ? 'Medium' : 'High'}
+      </div>
+      <div className="flex-1">
+        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+          <div className={`h-2 rounded-full ${barClasses}`} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <span className={`text-sm font-semibold ${textClasses}`}>{activeCount}</span>
+    </div>
+  );
+}
+
 export default function AdminManageOfficers() {
   const queryClient = useQueryClient();
   const { data: officers = [], isLoading } = useQuery({
@@ -109,20 +154,46 @@ export default function AdminManageOfficers() {
     { key: 'department', label: 'Department' },
     { key: 'area', label: 'Assigned Area' },
     { key: 'complaintsAssigned', label: 'Complaints Assigned' },
+    { key: 'activeComplaints', label: 'Active Complaints Count' },
     { key: 'performance', label: 'Performance' },
     { key: 'actions', label: 'Actions' },
   ];
 
   // Normalize officer data
-  const tableData = useMemo(() =>
-    officers.map(o => ({
-      ...o,
-      area: o.area || '-',
-      complaintsAssigned: o.complaints?.length || 0,
-      performance: o.performanceScore || Math.floor(Math.random() * 40) + 60, // Placeholder
-    })),
-    [officers]
-  );
+  const tableData = useMemo(() => {
+    return officers.map((o) => {
+      const complaintsList = Array.isArray(o.complaints) ? o.complaints : [];
+      const complaintsAssignedCount =
+        typeof o.complaintsAssigned === 'number' ? o.complaintsAssigned : complaintsList.length;
+
+      const activeFromList = complaintsList.filter((c) => {
+        const status = (c?.status || '').toString().toLowerCase();
+        return status !== 'resolved';
+      }).length;
+
+      // UI-only: if API returns a complaints list with statuses, use it; otherwise use complaintsAssigned as a fallback.
+      const activeComplaintsCount = complaintsList.length ? activeFromList : complaintsAssignedCount;
+
+      return {
+        ...o,
+        area: o.area || '-',
+        complaintsAssigned: complaintsAssignedCount,
+        activeComplaintsCount,
+        // Deterministic placeholder: avoids Math.random() during render.
+        performance:
+          typeof o.performanceScore === 'number'
+            ? o.performanceScore
+            : Math.min(100, 55 + (activeComplaintsCount % 45)),
+      };
+    });
+  }, [officers]);
+
+  const maxActiveComplaintsCount = useMemo(() => {
+    return Math.max(
+      1,
+      ...tableData.map((t) => (typeof t.activeComplaintsCount === 'number' ? t.activeComplaintsCount : 0))
+    );
+  }, [tableData]);
 
   return (
     <DashboardLayout>
@@ -150,6 +221,12 @@ export default function AdminManageOfficers() {
                   <td className="px-4 py-3 text-slate-700">{officer.department}</td>
                   <td className="px-4 py-3 text-slate-600">{officer.area || '-'}</td>
                   <td className="px-4 py-3 text-center">{officer.complaintsAssigned}</td>
+                  <td className="px-4 py-3 min-w-[240px]">
+                    <WorkloadIndicator
+                      count={officer.activeComplaintsCount}
+                      maxCount={maxActiveComplaintsCount}
+                    />
+                  </td>
                   <td className="px-4 py-3 min-w-[120px]">
                     <OfficerPerformanceBar score={officer.performance} />
                     <span className="text-xs text-slate-500 ml-2 align-middle">{officer.performance}%</span>
@@ -194,6 +271,7 @@ export default function AdminManageOfficers() {
             <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
               <h2 className="text-xl font-semibold mb-4">Add New Officer</h2>
               {addFormSuccess && <div className="mb-2 text-green-600 text-sm">{addFormSuccess}</div>}
+              {addFormError && <div className="mb-2 text-rose-600 text-sm font-semibold">{addFormError}</div>}
               <form
                 onSubmit={e => {
                   e.preventDefault();

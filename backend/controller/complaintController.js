@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Complaint from "../model/complaintSchema.js";
 import Officer from "../model/officerSchema.js";
+import Notification from "../model/notificationSchema.js";
 
 // ===============================
 // 🆔 Generate Next Issue ID
@@ -82,6 +83,24 @@ export const createComplaint = async (req, res) => {
     const savedComplaint = await newComplaint.save();
 
     console.log("✅ Complaint created successfully:", issueId);
+
+    // Notify citizen + assigned officer about the new complaint assignment.
+    // (Ensures `/citizen/notifications` and `/officer/notifications` can show real data.)
+    await Notification.create({
+      citizen: citizenId,
+      type: 'assignment',
+      message: `New complaint submitted: ${issueId}. Assigned to ${officer.name}.`,
+      link: `/citizen/track/${issueId}`,
+      isRead: false,
+    });
+
+    await Notification.create({
+      officer: officer._id,
+      type: 'assignment',
+      message: `New complaint assigned: ${savedComplaint.title} in ${savedComplaint.category} category.`,
+      link: `/officer/issue/${savedComplaint.issueId || savedComplaint._id}`,
+      isRead: false,
+    });
 
     res.status(201).json({
       message: "Complaint created successfully",
@@ -453,6 +472,32 @@ export const updateComplaintStatus = async (req, res) => {
     console.log("✅ Complaint status updated to:", status);
     console.log("✅ Resolution notes saved:", !!notes);
     console.log("✅ Proof image saved:", !!proofImage);
+
+    // Create notifications for officer + citizen based on status.
+    // - Resolved -> type "resolved"
+    // - Any other update -> type "status_update"
+    const notifType = status === 'Resolved' ? 'resolved' : 'status_update';
+    const citizenIdToNotify = updatedComplaint.citizen?._id || updatedComplaint.citizen;
+
+    // Officer notification
+    await Notification.create({
+      officer: officerId,
+      type: notifType,
+      message: `Complaint ${updatedComplaint.issueId || updatedComplaint._id} status updated to ${status}.`,
+      link: `/officer/issue/${updatedComplaint.issueId || updatedComplaint._id}`,
+      isRead: false,
+    });
+
+    // Citizen notification (if we can identify citizen)
+    if (citizenIdToNotify) {
+      await Notification.create({
+        citizen: citizenIdToNotify,
+        type: notifType,
+        message: `Your complaint ${updatedComplaint.issueId || updatedComplaint._id} status is now ${status}.`,
+        link: `/citizen/track/${updatedComplaint.issueId || updatedComplaint._id}`,
+        isRead: false,
+      });
+    }
 
     res.status(200).json({
       message: "Complaint status updated successfully",

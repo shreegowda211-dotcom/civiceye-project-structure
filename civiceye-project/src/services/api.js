@@ -102,6 +102,11 @@ export const officerAPI = {
 
   // Get officer performance analytics
   getOfficerPerformance: () => apiClient.get('/officer/performance'),
+
+  // Notification endpoints
+  getNotifications: () => apiClient.get('/officer/notifications'),
+  markNotificationAsRead: (id) => apiClient.put(`/officer/notifications/${id}/read`),
+  markAllNotificationsAsRead: () => apiClient.put('/officer/notifications/read-all'),
 };
 
 // ======================================
