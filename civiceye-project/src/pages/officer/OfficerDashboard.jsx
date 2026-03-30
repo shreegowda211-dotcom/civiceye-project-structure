@@ -215,14 +215,26 @@ export default function OfficerDashboard() {
               </div>
             )}
 
-            {/* Error State */}
+            {/* Error State - Full-width prominent alert */}
             {isError && (
-              <div className="flex items-center gap-4 bg-red-50 border border-red-200 rounded-lg p-6 m-6">
-                <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-red-900">Error Loading Complaints</p>
-                  <p className="text-sm text-red-700">{error?.message || 'Failed to fetch assigned complaints. Please try again.'}</p>
-                </div>
+              <div className="w-full flex justify-center items-center py-8">
+                <Card className="w-full max-w-2xl bg-red-50 border-2 border-red-400 shadow-2xl animate-pulse">
+                  <CardHeader className="flex flex-row items-center gap-3 bg-red-100 border-b-2 border-red-200">
+                    <AlertCircle className="h-7 w-7 text-red-600 flex-shrink-0" />
+                    <CardTitle className="text-xl text-red-800 font-bold">Failed to load data</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4 items-center">
+                    <p className="text-red-700 text-base font-medium">{error?.message || 'Could not fetch assigned complaints. Please check your connection and try again.'}</p>
+                    <Button
+                      variant="civic"
+                      size="md"
+                      className="font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg text-base"
+                      onClick={() => window.location.reload()}
+                    >
+                      Retry
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             )}
 

@@ -2,9 +2,16 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@react-google-maps/api": "^2.20.8",
+    "express-validator": "^7.3.1",
     "multer": "^2.1.1"
   },
   "scripts": {
     "test": "echo \"No tests specified\" && exit 0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2"
   }
 }

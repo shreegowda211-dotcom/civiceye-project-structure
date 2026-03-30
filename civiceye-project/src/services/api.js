@@ -1,6 +1,13 @@
-import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:7000/api';
+import axios from 'axios';
+// ...existing code...
+
+// ======================================
+// 🔧 ADMIN COMPLAINT ENDPOINTS
+// ======================================
+
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:7000/api';
 
 // Create axios instance with default headers
 const apiClient = axios.create({
@@ -144,6 +151,9 @@ export const adminAPI = {
   // Settings
   getSettings: () => apiClient.get('/admin/settings'),
   updateSettings: (data) => apiClient.put('/admin/settings', data),
+
+  // Audit logs
+  getAuditLogs: (params = {}) => apiClient.get('/admin/audit-logs', { params }),
 };
 
 // ======================================

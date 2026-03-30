@@ -1,4 +1,8 @@
+import { getAuditLogs } from '../controller/adminController.js';
+// Audit log route
+router.get('/audit-logs', verifyAdminToken, getAuditLogs);
 import express from 'express';
+import { body, validationResult } from 'express-validator';
 import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers, createOfficer } from '../controller/loginController.js';
 import { getAllComplaints, assignOfficerToComplaint, autoAssignCategoryComplaints, markComplaintUrgent, escalateComplaint } from '../controller/adminController.js';
 import { deleteCitizen, updateCitizen, getAllAreas, createArea, updateArea, deleteArea, assignOfficerToArea, getAllFeedback, getAdminSettings, updateAdminSettings, blockCitizen, blockOfficer } from '../controller/adminController.js';
@@ -26,7 +30,24 @@ router.put('/citizens/:id/block', verifyAdminToken, blockCitizen);
 router.delete('/citizens/:id', verifyAdminToken, deleteCitizen);
 
 router.get('/officers', verifyAdminToken, getAllOfficers);
-router.post('/officers', verifyAdminToken, createOfficer);
+router.post(
+	'/officers',
+	verifyAdminToken,
+	[
+		body('name').notEmpty().withMessage('Name is required'),
+		body('email').isEmail().withMessage('Valid email is required'),
+		body('department').isIn(["Road Damage", "Garbage", "Streetlight", "Water Leakage", "Other"]).withMessage('Department must be a valid enum'),
+		body('area').notEmpty().withMessage('Area is required'),
+	],
+	(req, res, next) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({ success: false, errors: errors.array(), message: 'Validation failed' });
+		}
+		next();
+	},
+	createOfficer
+);
 router.put('/officers/:id', verifyAdminToken, updateOfficer);
 router.put('/officers/:id/block', verifyAdminToken, blockOfficer);
 router.delete('/officers/:id', verifyAdminToken, deleteOfficer);

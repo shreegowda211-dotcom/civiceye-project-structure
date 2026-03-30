@@ -1,4 +1,38 @@
 /**
+ * @desc Get audit logs (admin actions)
+ * @route GET /api/admin/audit-logs
+ * @access Private/Admin
+ */
+export const getAuditLogs = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, action, targetType, adminId, startDate, endDate } = req.query;
+    const query = {};
+    if (action) query.action = action;
+    if (targetType) query.targetType = targetType;
+    if (adminId) query.adminId = adminId;
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) query.timestamp.$gte = new Date(startDate);
+      if (endDate) query.timestamp.$lte = new Date(endDate);
+    }
+    const logs = await AuditLog.find(query)
+      .sort({ timestamp: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate('adminId', 'name email');
+    const total = await AuditLog.countDocuments(query);
+    res.status(200).json({
+      success: true,
+      data: logs,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch audit logs', error: error.message });
+  }
+};
+/**
  * @desc Block or unblock a citizen
  * @route PUT /api/admin/citizens/:id/block
  * @access Private/Admin
@@ -13,11 +47,11 @@ export const blockCitizen = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password');
     if (!citizen) {
-      return res.status(404).json({ success: false, message: 'Citizen not found' });
+      return res.status(404).json({ success: false, data: null, message: 'Citizen not found' });
     }
-    res.status(200).json({ success: true, message: blocked ? 'Citizen blocked' : 'Citizen unblocked', data: citizen });
+    res.status(200).json({ success: true, data: citizen, message: blocked ? 'Citizen blocked' : 'Citizen unblocked' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update block status', error: error.message });
+    res.status(500).json({ success: false, data: null, message: 'Failed to update block status' });
   }
 };
 
@@ -36,11 +70,11 @@ export const blockOfficer = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password');
     if (!officer) {
-      return res.status(404).json({ success: false, message: 'Officer not found' });
+      return res.status(404).json({ success: false, data: null, message: 'Officer not found' });
     }
-    res.status(200).json({ success: true, message: blocked ? 'Officer blocked' : 'Officer unblocked', data: officer });
+    res.status(200).json({ success: true, data: officer, message: blocked ? 'Officer blocked' : 'Officer unblocked' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update block status', error: error.message });
+    res.status(500).json({ success: false, data: null, message: 'Failed to update block status' });
   }
 };
 /**
@@ -53,23 +87,19 @@ export const deleteCitizen = async (req, res) => {
     const { id } = req.params;
     const citizen = await Citizen.findByIdAndDelete(id);
     if (!citizen) {
-      return res.status(404).json({
-        success: false,
-        message: 'Citizen not found',
-      });
+      return res.status(404).json({ success: false, data: null, message: 'Citizen not found' });
     }
-    res.status(200).json({
-      success: true,
-      message: 'Citizen deleted successfully',
-      data: { id: citizen._id },
+    // Audit log: Citizen deleted
+    await AuditLog.create({
+      adminId: req.user?._id,
+      action: 'delete_citizen',
+      targetType: 'Citizen',
+      targetId: citizen._id.toString(),
+      details: { name: citizen.name, email: citizen.email },
     });
+    res.status(200).json({ success: true, data: { id: citizen._id }, message: 'Citizen deleted successfully' });
   } catch (error) {
-    console.error('Error deleting citizen:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete citizen',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, data: null, message: 'Failed to delete citizen' });
   }
 };
 /**
@@ -89,32 +119,22 @@ export const updateCitizen = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password');
     if (!citizen) {
-      return res.status(404).json({
-        success: false,
-        message: 'Citizen not found',
-      });
+      return res.status(404).json({ success: false, data: null, message: 'Citizen not found' });
     }
-    res.status(200).json({
-      success: true,
-      message: 'Citizen updated successfully',
-      data: citizen,
-    });
+    res.status(200).json({ success: true, data: citizen, message: 'Citizen updated successfully' });
   } catch (error) {
-    console.error('Error updating citizen:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update citizen',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, data: null, message: 'Failed to update citizen' });
   }
 };
 import Complaint from '../model/complaintSchema.js';
+import { paginate } from '../lib/paginate.js';
 import Citizen from '../model/citizenScheme.js';
 import Officer from '../model/officerSchema.js';
 import Area from '../model/areaSchema.js';
 import Feedback from '../model/feedbackSchema.js';
 import Notification from '../model/notificationSchema.js';
 import Settings from '../model/settingsSchema.js';
+import AuditLog from '../model/auditLogSchema.js';
 
 /**
  * @desc Get all complaints for admin dashboard
@@ -125,7 +145,21 @@ import Settings from '../model/settingsSchema.js';
 // Get all complaints with optional filters
 export const getAllComplaints = async (req, res) => {
   try {
-    const { status, priority, category, urgent, escalated, assignedOfficer } = req.query;
+    const {
+      status,
+      priority,
+      category,
+      urgent,
+      escalated,
+      assignedOfficer,
+      area,
+      search,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10
+    } = req.query;
+
     const filter = {};
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
@@ -134,26 +168,42 @@ export const getAllComplaints = async (req, res) => {
     if (escalated !== undefined) filter.escalated = escalated === 'true';
     if (assignedOfficer) filter.assignedOfficer = assignedOfficer;
 
-    const complaints = await Complaint.find(filter)
-      .populate('assignedOfficer', 'name email department')
-      .populate('citizen', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .lean();
+    // Search by title (case-insensitive, partial match)
+    if (search) {
+      filter.title = { $regex: search, $options: 'i' };
+    }
+
+    // Filter by area (area name)
+    if (area) {
+      // Find area by name and get complaints with location containing area name
+      filter.location = { $regex: area, $options: 'i' };
+    }
+
+    // Filter by date range (createdAt)
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    const pagination = await paginate(
+      Complaint,
+      filter,
+      parseInt(page, 10),
+      parseInt(limit, 10),
+      [
+        { path: 'assignedOfficer', select: 'name email department' },
+        { path: 'citizen', select: 'name email' }
+      ]
+    );
 
     res.status(200).json({
       success: true,
-      message: 'Complaints retrieved successfully',
-      complaints: complaints || [],
-      total: complaints.length,
+      data: pagination,
+      message: 'Complaints retrieved successfully'
     });
   } catch (error) {
-    console.error('Error fetching complaints:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch complaints',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, data: null, message: 'Failed to fetch complaints' });
   }
 };
 
@@ -208,6 +258,19 @@ export const assignOfficerToComplaint = async (req, res) => {
       link: `/officer/complaints/${complaint._id}`,
     });
 
+    // Audit log: Complaint assigned
+    await AuditLog.create({
+      adminId: req.user?._id,
+      action: 'assign_complaint',
+      targetType: 'Complaint',
+      targetId: complaint._id.toString(),
+      details: {
+        assignedOfficer: officer.officerId,
+        previousOfficer: previousOfficerId?.toString() || null,
+        complaintTitle: complaint.title,
+        complaintCategory: complaint.category,
+      },
+    });
     res.status(200).json({ success: true, message: 'Complaint assigned to officer', complaint: populatedComplaint });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to assign officer', error: error.message });
@@ -389,6 +452,19 @@ export const escalateComplaint = async (req, res) => {
       });
     }
 
+    // Audit log: Complaint escalated
+    await AuditLog.create({
+      adminId: req.user?._id,
+      action: 'escalate_complaint',
+      targetType: 'Complaint',
+      targetId: complaint._id.toString(),
+      details: {
+        escalationLevel: newLevel,
+        assignedOfficer: complaint.assignedOfficer?.toString() || null,
+        complaintTitle: complaint.title,
+        complaintCategory: complaint.category,
+      },
+    });
     res.status(200).json({ success: true, message: 'Complaint escalated', complaint: updated });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to escalate', error: error.message });
@@ -402,24 +478,22 @@ export const escalateComplaint = async (req, res) => {
  */
 export const getAllCitizens = async (req, res) => {
   try {
-    const citizens = await Citizen.find()
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .lean();
-
+    const { page = 1, limit = 10 } = req.query;
+    const pagination = await paginate(
+      Citizen,
+      {},
+      parseInt(page, 10),
+      parseInt(limit, 10)
+    );
+    // Remove passwords from results
+    pagination.results = pagination.results.map(({ password, ...rest }) => rest);
     res.status(200).json({
       success: true,
-      message: 'Citizens retrieved successfully',
-      data: citizens || [],
-      total: citizens.length,
+      data: pagination,
+      message: 'Citizens retrieved successfully'
     });
   } catch (error) {
-    console.error('Error fetching citizens:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch citizens',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, data: null, message: 'Failed to fetch citizens' });
   }
 };
 
@@ -430,24 +504,22 @@ export const getAllCitizens = async (req, res) => {
  */
 export const getAllOfficers = async (req, res) => {
   try {
-    const officers = await Officer.find()
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .lean();
-
+    const { page = 1, limit = 10 } = req.query;
+    const pagination = await paginate(
+      Officer,
+      {},
+      parseInt(page, 10),
+      parseInt(limit, 10)
+    );
+    // Remove passwords from results
+    pagination.results = pagination.results.map(({ password, ...rest }) => rest);
     res.status(200).json({
       success: true,
-      message: 'Officers retrieved successfully',
-      data: officers || [],
-      total: officers.length,
+      data: pagination,
+      message: 'Officers retrieved successfully'
     });
   } catch (error) {
-    console.error('Error fetching officers:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch officers',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, data: null, message: 'Failed to fetch officers' });
   }
 };
 
@@ -458,37 +530,38 @@ export const getAllOfficers = async (req, res) => {
  */
 export const getAllFeedback = async (req, res) => {
   try {
-    // optionally filter by officer or complaint if query is provided
-    const { officerId, complaintId } = req.query;
+    const { officerId, complaintId, page = 1, limit = 10 } = req.query;
     const filter = {};
     if (officerId) filter.officer = officerId;
     if (complaintId) filter.complaint = complaintId;
 
-    const feedback = await Feedback.find(filter)
-      .populate('citizen', 'name email')
-      .populate('officer', 'name email')
-      .populate('complaint', 'issueId title')
-      .sort({ createdAt: -1 })
-      .lean();
+    const pagination = await paginate(
+      Feedback,
+      filter,
+      parseInt(page, 10),
+      parseInt(limit, 10),
+      [
+        { path: 'citizen', select: 'name email' },
+        { path: 'officer', select: 'name email' },
+        { path: 'complaint', select: 'issueId title' }
+      ]
+    );
 
-    const avgRating = feedback.length ? feedback.reduce((acc, item) => acc + item.rating, 0) / feedback.length : 0;
-    const avgSatisfaction = feedback.length ? feedback.reduce((acc, item) => acc + item.satisfactionScore, 0) / feedback.length : 0;
+    // Calculate averages from paginated results only (for full dataset, move calculation outside pagination)
+    const avgRating = pagination.results.length ? pagination.results.reduce((acc, item) => acc + (item.rating || 0), 0) / pagination.results.length : 0;
+    const avgSatisfaction = pagination.results.length ? pagination.results.reduce((acc, item) => acc + (item.satisfactionScore || 0), 0) / pagination.results.length : 0;
 
     res.status(200).json({
       success: true,
-      message: 'Feedback retrieved successfully',
-      data: feedback || [],
-      total: feedback.length,
-      averageRating: Number(avgRating.toFixed(2)),
-      averageSatisfaction: Number(avgSatisfaction.toFixed(2)),
+      data: {
+        ...pagination,
+        averageRating: Number(avgRating.toFixed(2)),
+        averageSatisfaction: Number(avgSatisfaction.toFixed(2)),
+      },
+      message: 'Feedback retrieved successfully'
     });
   } catch (error) {
-    console.error('Error fetching feedback:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch feedback',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, data: null, message: 'Failed to fetch feedback' });
   }
 };
 
@@ -530,6 +603,14 @@ export const updateAdminSettings = async (req, res) => {
       new: true,
       upsert: true,
       runValidators: true,
+    });
+    // Audit log: Admin settings updated
+    await AuditLog.create({
+      adminId: req.user?._id,
+      action: 'update_settings',
+      targetType: 'Settings',
+      targetId: settings._id.toString(),
+      details: payload,
     });
     res.status(200).json({
       success: true,
@@ -619,7 +700,14 @@ export const createOfficer = async (req, res) => {
 
       try {
         await newOfficer.save();
-
+        // Audit log: Officer created
+        await AuditLog.create({
+          adminId: req.user?._id,
+          action: 'create_officer',
+          targetType: 'Officer',
+          targetId: newOfficer._id.toString(),
+          details: { officerId: newOfficer.officerId, name, email, department, phone },
+        });
         return res.status(201).json({
           success: true,
           message: 'Officer created successfully',
@@ -715,6 +803,14 @@ export const deleteOfficer = async (req, res) => {
       });
     }
 
+    // Audit log: Officer deleted
+    await AuditLog.create({
+      adminId: req.user?._id,
+      action: 'delete_officer',
+      targetType: 'Officer',
+      targetId: officer._id.toString(),
+      details: { name: officer.name, email: officer.email, officerId: officer.officerId },
+    });
     res.status(200).json({
       success: true,
       message: 'Officer deleted successfully',
@@ -737,11 +833,21 @@ export const deleteOfficer = async (req, res) => {
  */
 export const getAllAreas = async (req, res) => {
   try {
-    const areas = await Area.find().populate('assignedOfficer', 'name email department').sort({ createdAt: -1 }).lean();
-    res.status(200).json({ success: true, message: 'Areas retrieved successfully', data: areas || [], total: areas.length });
+    const { page = 1, limit = 10 } = req.query;
+    const pagination = await paginate(
+      Area,
+      {},
+      parseInt(page, 10),
+      parseInt(limit, 10),
+      [ { path: 'assignedOfficer', select: 'name email department' } ]
+    );
+    res.status(200).json({
+      success: true,
+      data: pagination,
+      message: 'Areas retrieved successfully'
+    });
   } catch (error) {
-    console.error('Error fetching areas:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to fetch areas', error: error.message });
+    res.status(500).json({ success: false, data: null, message: 'Failed to fetch areas' });
   }
 };
 

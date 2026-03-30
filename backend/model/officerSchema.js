@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const officerSchema = new mongoose.Schema({
     officerId: {
@@ -53,6 +54,19 @@ const officerSchema = new mongoose.Schema({
 // Explicit unique index for officerId (MongoDB uniqueness enforcement)
 officerSchema.index({ officerId: 1 }, { unique: true });
 
-const officer =  mongoose.model("officer", officerSchema);
+
+// Hash password before saving
+officerSchema.pre("save", async function(next) {
+    if (!this.isModified("password")) return next();
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+});
+
+// Compare password method
+officerSchema.methods.comparePassword = async function(candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.password);
+};
+
+const officer = mongoose.model("officer", officerSchema);
 export default officer;
     

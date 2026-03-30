@@ -266,23 +266,29 @@ export const getComplaintsForOfficer = async (req, res) => {
     console.log("   📝 Officer name:", officerData.name);
     console.log("   📂 Officer department:", officerData.department);
 
-    // Get all complaints assigned to this officer's department (category)
-    console.log("   🔎 Searching for complaints with category:", officerData.department);
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const totalComplaints = await Complaint.countDocuments({ category: officerData.department });
+    const totalPages = Math.ceil(totalComplaints / limit);
+
+    // Get paginated complaints
     const complaints = await Complaint.find({ category: officerData.department })
       .populate('citizen', 'name email')
       .populate('assignedOfficer', 'name email department')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    console.log("   ✅ Found", complaints.length, "complaints for department:", officerData.department);
+    console.log(`   ✅ Found ${complaints.length} complaints for department: ${officerData.department} (page ${page}/${totalPages})`);
 
     res.status(200).json({
-      message: "Officer complaints retrieved successfully",
-      officer: {
-        name: officerData.name,
-        email: officerData.email,
-        department: officerData.department
-      },
-      complaints
+      complaints,
+      totalPages,
+      currentPage: page
     });
 
   } catch (error) {

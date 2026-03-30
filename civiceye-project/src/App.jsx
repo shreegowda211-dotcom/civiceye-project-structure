@@ -1,3 +1,12 @@
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <ProtectedRoute allowedRoles={[ 'admin' ]}>
+            <AdminAuditLogs />
+          </ProtectedRoute>
+        }
+      />
 // removed placeholder toaster/sonner/tooltip providers
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";

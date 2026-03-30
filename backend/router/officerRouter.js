@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import { body, validationResult } from 'express-validator';
 import { officerLogin, getOfficerProfile } from '../controller/loginController.js';
 import { getComplaintsForOfficer, updateComplaintStatus, getOfficerPerformance } from '../controller/complaintController.js';
 import { getOfficerNotifications, markOfficerNotificationRead, markAllOfficerNotificationsRead } from '../controller/officerNotificationController.js';
@@ -26,7 +27,30 @@ router.get("/profile", verifyOfficerToken, getOfficerProfile);
 
 // Complaint routes for officers - filtered by their department
 router.get("/complaints", verifyOfficerToken, getComplaintsForOfficer);
-router.put("/complaints/:complaintId/status", verifyOfficerToken, upload.single("proofImage"), updateComplaintStatus);
+router.put(
+  "/complaints/:complaintId/status",
+  verifyOfficerToken,
+  upload.single("proofImage"),
+  [
+    body("status")
+      .isIn(["pending", "in-progress", "resolved"])
+      .withMessage('Status must be "pending", "in-progress", or "resolved"'),
+    body("notes").custom((value, { req }) => {
+      if (req.body.status === "resolved" && (!value || value.trim() === "")) {
+        throw new Error("Notes must not be empty if status is resolved");
+      }
+      return true;
+    }),
+  ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+  updateComplaintStatus
+);
 
 // Performance analytics route
 router.get("/performance", verifyOfficerToken, getOfficerPerformance);

@@ -12,6 +12,9 @@ import { officerRegister } from './controller/officerController.js';
 import { citizenLogin, officerLogin, adminLogin } from './controller/loginController.js';
 import { verifyCitizenToken } from './middleware/authAdmin.js';
 
+// Start auto escalation cron job
+import './cronAutoEscalate.js';
+
 const app = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

@@ -54,6 +54,7 @@ export default function DashboardLayout({ children }) {
     { icon: <BarChart3 className="h-5 w-5" />, label: "Category Analytics", path: "/admin/categories" },
     { icon: <ClipboardList className="h-5 w-5" />, label: "All Issues", path: "/admin/issues" },
     { icon: <Map className="h-5 w-5" />, label: "Areas", path: "/admin/areas" },
+    { icon: <ClipboardList className="h-5 w-5" />, label: "Audit Logs", path: "/admin/audit-logs" },
     // /admin/categories route is already used by Category Analytics
     { icon: <Settings className="h-5 w-5" />, label: "Departments", path: "/admin/departments" },
     { icon: <Settings className="h-5 w-5" />, label: "Services", path: "/admin/services" },

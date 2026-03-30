@@ -91,6 +91,8 @@ const notificationConfig = {
   },
 };
 
+// ...existing imports...
+
 export default function OfficerNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
@@ -110,7 +112,7 @@ export default function OfficerNotifications() {
       if (response.data.success) {
         setNotifications(response.data.notifications || []);
       } else {
-        setError('Failed to fetch notifications');
+        setError(response.data.message || 'Failed to fetch notifications');
       }
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -120,28 +122,6 @@ export default function OfficerNotifications() {
     }
   };
 
-  // Refresh notifications when returning to this tab/window.
-  useEffect(() => {
-    const maybeRefresh = () => {
-      if (document.visibilityState === 'visible') {
-        fetchNotifications();
-      }
-    };
-
-    window.addEventListener('focus', maybeRefresh);
-    document.addEventListener('visibilitychange', maybeRefresh);
-
-    return () => {
-      window.removeEventListener('focus', maybeRefresh);
-      document.removeEventListener('visibilitychange', maybeRefresh);
-    };
-  }, []);
-
-  // Get unread count
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const readCount = notifications.filter((n) => n.isRead).length;
-
-  // Handle mark as read
   const handleMarkAsRead = async (id) => {
     try {
       await officerAPI.markNotificationAsRead(id);
@@ -150,26 +130,18 @@ export default function OfficerNotifications() {
       );
     } catch (err) {
       console.error('Error marking notification as read:', err);
-      // Still update UI optimistically
-      setNotifications((prev) =>
-        prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif))
-      );
     }
   };
 
-  // Handle mark all as read
   const handleMarkAllAsRead = async () => {
     try {
       await officerAPI.markAllNotificationsAsRead();
       setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
-      // Still update UI optimistically
-      setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
     }
   };
 
-  // Toggle expand
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
   };
@@ -191,7 +163,7 @@ export default function OfficerNotifications() {
             <p className="text-slate-600 mt-1">Stay updated with complaint activities</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-            <p className="text-sm font-semibold text-blue-900">Unread: {unreadCount}</p>
+            <p className="text-sm font-semibold text-blue-900">Unread: {notifications.filter((n) => !n.isRead).length}</p>
           </div>
         </div>
 
@@ -203,7 +175,6 @@ export default function OfficerNotifications() {
               <p className="text-slate-600">Loading notifications...</p>
             </div>
           </div>
-
         )}
 
         {/* Error State */}
@@ -222,40 +193,18 @@ export default function OfficerNotifications() {
           </div>
         )}
 
-        {/* Action Buttons */}
-        {!isLoading && !error && (
-        <div className="flex gap-3 flex-wrap">
-          {unreadCount > 0 && (
-            <Button
-              onClick={handleMarkAllAsRead}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
-            >
-              <Check className="h-4 w-4" />
-              Mark All as Read
-            </Button>
-          )}
-
-          <Button
-            onClick={fetchNotifications}
-            className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
-        </div>
-
+        {/* Notifications List */}
+        {!isLoading && !error && notifications.length === 0 && (
+          <div className="text-center py-12">
+            <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No notifications yet</h3>
+            <p className="text-slate-600">You'll see notifications here when complaints are assigned to you or updated.</p>
+          </div>
         )}
 
-        {/* Notifications List */}
-        <div className="space-y-3">
-          {notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No notifications yet</h3>
-              <p className="text-slate-600">You'll see notifications here when complaints are assigned to you or updated.</p>
-            </div>
-          ) : (
-            notifications.map((notification, index) => {
+        {!isLoading && !error && notifications.length > 0 && (
+          <div className="space-y-3">
+            {notifications.map((notification, index) => {
               const config = notificationConfig[notification.type] || notificationConfig.system;
               const Icon = config.icon;
               const isExpanded = expandedId === notification._id;
@@ -272,104 +221,23 @@ export default function OfficerNotifications() {
                       : `bg-white border-blue-400 shadow-lg shadow-blue-500/10`
                   }`}
                 >
-                  <div
-                    onClick={() => toggleExpand(notification._id)}
-                    className="p-4 cursor-pointer"
-                  >
+                  <div onClick={() => toggleExpand(notification._id)} className="p-4 cursor-pointer">
                     <div className="flex items-start gap-4">
-                      {/* Icon */}
-                      <div
-                        className={`flex-shrink-0 p-2 rounded-lg ${
-                          notification.isRead ? config.badge : 'bg-blue-100'
-                        }`}
-                      >
-                        <Icon
-                          className={`h-6 w-6 ${
-                            notification.isRead ? config.iconColor : 'text-blue-600'
-                          }`}
-                        />
+                      <div className={`flex-shrink-0 p-2 rounded-lg ${notification.isRead ? config.badge : 'bg-blue-100'}`}>
+                        <Icon className={`h-6 w-6 ${notification.isRead ? config.iconColor : 'text-blue-600'}`} />
                       </div>
-
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-slate-900">
-                                {notification.type === 'assignment' ? 'New Assignment' :
-                                 notification.type === 'status_update' ? 'Status Update' :
-                                 notification.type === 'resolved' ? 'Complaint Resolved' :
-                                 notification.type === 'update' ? 'Status Update' :
-                                 notification.type === 'escalation' ? 'Escalated Complaint' :
-                                 'System Notification'}
-                              </h3>
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${config.badge}`}>
-                                {config.label}
-                              </span>
-                              {!notification.isRead && (
-                                <span className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
-                              )}
-                            </div>
-                            <p className="text-slate-600 text-sm line-clamp-2">
-                              {notification.message}
-                            </p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <span className="text-xs text-slate-500 flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatTime(notification.createdAt)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                        <h3 className="font-semibold text-slate-900">{config.label}</h3>
+                        <p className="text-slate-600 text-sm line-clamp-2">{notification.message}</p>
+                        <span className="text-xs text-slate-500">{formatTime(notification.createdAt)}</span>
                       </div>
                     </div>
-
-                    {/* Expanded Actions */}
-                    {isExpanded && (
-                      <MotionDiv
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 pt-4 border-t border-slate-200 flex gap-2"
-                      >
-                        {!notification.isRead && (
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMarkAsRead(notification._id);
-                            }}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded font-medium text-sm transition-all"
-                          >
-                            Mark as Read
-                          </Button>
-                        )}
-                        {/* No delete/dismiss for real notifications */}
-                      </MotionDiv>
-                    )}
                   </div>
                 </MotionDiv>
               );
-            })
-          )}
-        </div>
-        {/* Stats Footer */}
-        <div className="mt-8 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-          <div className="flex justify-between text-sm text-slate-600">
-            <div>
-              <span className="font-semibold text-slate-900">{notifications.length}</span> total
-              notifications
-            </div>
-            <div>
-              <span className="font-semibold text-blue-600">{unreadCount}</span> unread
-            </div>
-            <div>
-              <span className="font-semibold text-slate-500">
-                {readCount}
-              </span>{' '}
-              read
-            </div>
+            })}
           </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

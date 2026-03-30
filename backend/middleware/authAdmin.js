@@ -51,6 +51,12 @@ const verifyAdminToken = async (req, res, next) => {
     }
     try {
         const decoded = jwt.verify(token, ADMIN_KEY);
+        if (!decoded.role || decoded.role.toLowerCase() !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied"
+            });
+        }
         req.admin = decoded;
         return next();
     } catch (error) {
