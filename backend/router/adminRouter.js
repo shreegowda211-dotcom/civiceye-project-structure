@@ -2,7 +2,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers } from '../controller/loginController.js';
 import { getAllComplaints, assignOfficerToComplaint, autoAssignCategoryComplaints, markComplaintUrgent, escalateComplaint, getAuditLogs, createOfficer } from '../controller/adminController.js';
-import { deleteCitizen, updateCitizen, getAllAreas, createArea, updateArea, deleteArea, assignOfficerToArea, getAllFeedback, getAdminSettings, updateAdminSettings, blockCitizen, blockOfficer } from '../controller/adminController.js';
+import { deleteCitizen, deleteUser, updateCitizen, getAllAreas, createArea, updateArea, deleteArea, assignOfficerToArea, getAllFeedback, getAdminSettings, updateAdminSettings, blockCitizen, blockOfficer, blockUser, updateOfficerStatus } from '../controller/adminController.js';
 import { getAllCategories, addCategory, editCategory, deleteCategory } from '../controller/categoryController.js';
 import { updateOfficer, deleteOfficer } from '../controller/adminController.js';
 import { verifyAdminToken } from '../middleware/authAdmin.js';
@@ -24,6 +24,8 @@ router.put('/complaints/:complaintId/escalate', verifyAdminToken, escalateCompla
 router.post('/complaints/auto-assign', verifyAdminToken, autoAssignCategoryComplaints);
 
 // User management routes for admin
+router.put('/users/:id/block', verifyAdminToken, blockUser);
+router.delete('/users/:id', verifyAdminToken, deleteUser);
 router.get('/citizens', verifyAdminToken, getAllCitizens);
 router.put('/citizens/:id', verifyAdminToken, updateCitizen);
 router.put('/citizens/:id/block', verifyAdminToken, blockCitizen);
@@ -50,6 +52,7 @@ router.post(
 );
 router.put('/officers/:id', verifyAdminToken, updateOfficer);
 router.put('/officers/:id/block', verifyAdminToken, blockOfficer);
+router.put('/officers/:id/status', verifyAdminToken, updateOfficerStatus);
 router.delete('/officers/:id', verifyAdminToken, deleteOfficer);
 
 // Area management

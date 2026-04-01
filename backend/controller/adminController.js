@@ -55,6 +55,19 @@ export const blockCitizen = async (req, res) => {
 };
 
 /**
+ * @desc Generic block/unblock user endpoint (citizen scope)
+ * @route PUT /api/admin/users/:id/block
+ * @access Private/Admin
+ */
+export const blockUser = async (req, res) => {
+  // Frontend sends isBlocked; citizen endpoint expects blocked.
+  if (typeof req.body?.isBlocked !== 'undefined') {
+    req.body.blocked = !!req.body.isBlocked;
+  }
+  return blockCitizen(req, res);
+};
+
+/**
  * @desc Block or unblock an officer
  * @route PUT /api/admin/officers/:id/block
  * @access Private/Admin
@@ -65,7 +78,7 @@ export const blockOfficer = async (req, res) => {
     const { blocked } = req.body;
     const officer = await Officer.findByIdAndUpdate(
       id,
-      { blocked: !!blocked },
+      { blocked: !!blocked, isActive: !blocked },
       { new: true, runValidators: true }
     ).select('-password');
     if (!officer) {
@@ -74,6 +87,42 @@ export const blockOfficer = async (req, res) => {
     res.status(200).json({ success: true, data: officer, message: blocked ? 'Officer blocked' : 'Officer unblocked' });
   } catch (error) {
     res.status(500).json({ success: false, data: null, message: 'Failed to update block status' });
+  }
+};
+
+/**
+ * @desc Set officer active status
+ * @route PUT /api/admin/officers/:id/status
+ * @access Private/Admin
+ */
+export const updateOfficerStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+    const nextActive = !!isActive;
+    const officer = await Officer.findByIdAndUpdate(
+      id,
+      { isActive: nextActive, blocked: !nextActive },
+      { new: true, runValidators: true }
+    ).select('-password');
+    if (!officer) {
+      return res.status(404).json({ success: false, data: null, message: 'Officer not found' });
+    }
+    await logAdminAction({
+      adminId: req.admin?.id || req.admin?._id,
+      adminName: req.admin?.name || req.admin?.email || 'Admin',
+      action: nextActive ? 'UPDATE' : 'BLOCK',
+      targetType: 'Officer',
+      targetId: officer.officerId || officer._id.toString(),
+      description: nextActive ? `Activated officer ${officer.officerId || officer._id}` : `Blocked officer ${officer.officerId || officer._id}`,
+    });
+    return res.status(200).json({
+      success: true,
+      data: officer,
+      message: nextActive ? 'Officer activated' : 'Officer blocked',
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, data: null, message: 'Failed to update officer status' });
   }
 };
 /**
@@ -100,6 +149,15 @@ export const deleteCitizen = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, data: null, message: 'Failed to delete citizen' });
   }
+};
+
+/**
+ * @desc Generic delete user endpoint (citizen scope)
+ * @route DELETE /api/admin/users/:id
+ * @access Private/Admin
+ */
+export const deleteUser = async (req, res) => {
+  return deleteCitizen(req, res);
 };
 /**
  * @desc Update citizen by ID
@@ -215,9 +273,9 @@ export const getAllComplaints = async (req, res) => {
 export const assignOfficerToComplaint = async (req, res) => {
   try {
     const complaintId = req.params.complaintId || req.params.id;
-    const { officerId: officerIdInput } = req.body;
+    const officerIdInput = req.body?.officerId || req.body?.officer || req.body?.officerMongoId;
     if (!officerIdInput) {
-      return res.status(400).json({ success: false, message: 'officerId required (format: OFF-XXXX)' });
+      return res.status(400).json({ success: false, message: 'officerId required (format: OFF-XXXX) or valid officer _id' });
     }
 
     const complaint = await Complaint.findOne({ $or: [{ issueId: complaintId }, { _id: complaintId }] });
@@ -225,10 +283,13 @@ export const assignOfficerToComplaint = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Complaint not found' });
     }
 
-    // Find officer by the human readable officerId (OFF-XXXX)
-    const officer = await Officer.findOne({ officerId: officerIdInput });
+    // Support both human-readable officerId (OFF-XXXX) and raw Mongo _id fallback.
+    const isHumanOfficerId = /^OFF-\d{4}$/i.test(String(officerIdInput || '').trim());
+    const officer = isHumanOfficerId
+      ? await Officer.findOne({ officerId: String(officerIdInput).trim().toUpperCase() })
+      : await Officer.findById(officerIdInput);
     if (!officer) {
-      return res.status(404).json({ success: false, message: 'Officer not found for given officerId' });
+      return res.status(404).json({ success: false, message: 'Officer not found for given identifier' });
     }
 
     const previousOfficerId = complaint.assignedOfficer; // may be null (Mongo _id)
@@ -468,10 +529,23 @@ export const escalateComplaint = async (req, res) => {
  */
 export const getAllCitizens = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, search = '', status = '' } = req.query;
+    const filter = {};
+
+    if (search?.trim()) {
+      const q = search.trim();
+      filter.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    if (status === 'active') filter.blocked = false;
+    if (status === 'blocked') filter.blocked = true;
+
     const pagination = await paginate(
       Citizen,
-      {},
+      filter,
       parseInt(page, 10),
       parseInt(limit, 10)
     );
@@ -494,15 +568,33 @@ export const getAllCitizens = async (req, res) => {
  */
 export const getAllOfficers = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, search = '', department = '', area = '', status = '' } = req.query;
+    const filter = {};
+    if (search?.trim()) {
+      const q = search.trim();
+      filter.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+        { officerId: { $regex: q, $options: 'i' } },
+      ];
+    }
+    if (department) filter.department = department;
+    if (area) filter.area = { $regex: area, $options: 'i' };
+    if (status === 'active') filter.isActive = true;
+    if (status === 'blocked') filter.isActive = false;
+
     const pagination = await paginate(
       Officer,
-      {},
+      filter,
       parseInt(page, 10),
       parseInt(limit, 10)
     );
     // Remove passwords from results
-    pagination.results = pagination.results.map(({ password, ...rest }) => rest);
+    pagination.results = pagination.results.map(({ password, blocked, isActive, ...rest }) => ({
+      ...rest,
+      blocked: typeof blocked === 'boolean' ? blocked : !isActive,
+      isActive: typeof isActive === 'boolean' ? isActive : !blocked,
+    }));
     res.status(200).json({
       success: true,
       data: pagination,

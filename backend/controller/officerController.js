@@ -1,4 +1,27 @@
 import officer from "../model/officerSchema.js";
+// ===============================
+// 🆔 Generate Next Officer ID
+// ===============================
+const generateNextOfficerId = async () => {
+  try {
+    // Get the last officer to determine next ID
+    const lastOfficer = await officer.findOne().sort({ createdAt: -1 }).exec();
+    let nextNumber = 1;
+    if (lastOfficer && lastOfficer.officerId) {
+      // Extract number from officerId (e.g., "OFF-1023" -> 1023)
+      const match = lastOfficer.officerId.match(/OFF-(\d{4})/);
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1;
+      }
+    }
+    // Format: OFF-XXXX (e.g., OFF-0001)
+    const officerId = `OFF-${String(nextNumber).padStart(4, '0')}`;
+    return officerId;
+  } catch (error) {
+    console.error("❌ Error generating officer ID:", error);
+    throw error;
+  }
+};
 import bcrypt from "bcrypt";
 
  // 📧 Email validation regex
@@ -105,22 +128,28 @@ export const officerRegister = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("✅ Password hashed successfully");
 
-    // Create new officer with department
+    // Generate unique officerId
+    const officerId = await generateNextOfficerId();
+    console.log("🆔 Generated Officer ID:", officerId);
+
+    // Create new officer with officerId and department
     console.log("📝 About to create officer with:", {
+      officerId,
       name: trimmedName,
       email: trimmedEmail,
       department: department,
       role: "Officer"
     });
-    
+
     const newOfficer = await officer.create({
+      officerId,
       name: trimmedName,
       email: trimmedEmail,
       password: hashedPassword,
       role: "Officer",
       department: department
     });
-    
+
     console.log("✅ Officer created successfully:", newOfficer._id);
 
     // Success response
@@ -128,6 +157,7 @@ export const officerRegister = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Officer registered successfully!",
+      officerId: newOfficer.officerId,
     });
 
   } catch (error) {

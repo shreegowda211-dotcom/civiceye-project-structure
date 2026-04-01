@@ -42,7 +42,6 @@ export default function DashboardLayout({ children }) {
   const officerNavItems = [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", path: "/officer" },
     { icon: <ClipboardList className="h-5 w-5" />, label: "Assigned Issues", path: "/officer/issues" },
-    { icon: <CheckSquare className="h-5 w-5" />, label: "Update Status", path: "/officer/update-status" },
     { icon: <BarChart3 className="h-5 w-5" />, label: "Performance", path: "/officer/performance" },
     { icon: <Bell className="h-5 w-5" />, label: "Notifications", path: "/officer/notifications" },
   ];

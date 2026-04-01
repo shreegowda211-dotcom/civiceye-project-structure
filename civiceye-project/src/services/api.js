@@ -129,10 +129,11 @@ export const adminAPI = {
   autoAssignByCategory: () => apiClient.post('/admin/complaints/auto-assign'),
 
   // User endpoints
-  getAllCitizens: () => apiClient.get('/admin/citizens'),
-  getAllOfficers: () => apiClient.get('/admin/officers'),
+  getAllCitizens: (params = {}) => apiClient.get('/admin/citizens', { params }),
+  getAllOfficers: (params = {}) => apiClient.get('/admin/officers', { params }),
   createOfficer: (data) => apiClient.post('/admin/officers', data),
   updateOfficer: (id, data) => apiClient.put(`/admin/officers/${id}`, data),
+  updateOfficerStatus: (id, isActive) => apiClient.put(`/admin/officers/${id}/status`, { isActive }),
   updateCitizen: (id, data) => apiClient.put(`/admin/citizens/${id}`, data),
   deleteCitizen: (id) => apiClient.delete(`/admin/citizens/${id}`),
   deleteOfficer: (id) => apiClient.delete(`/admin/officers/${id}`),

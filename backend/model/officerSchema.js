@@ -48,6 +48,11 @@ const officerSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
         description: "Whether the officer is blocked by admin"
+    },
+    isActive: {
+        type: Boolean,
+        default: true,
+        description: "Officer active status for admin controls"
     }
 }, {timestamps: true}); 
 

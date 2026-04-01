@@ -1,418 +1,249 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '@/services/api';
-import { Card, CardHeader, CardContent, CardTitle, GradientCard } from '@/components/ui/card';
-import Table from '@/components/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2, BarChart2, Plus } from 'lucide-react';
-
-function OfficerPerformanceBar({ score }) {
-  // score: 0-100
-  return (
-    <div className="w-full bg-slate-200 rounded-full h-3">
-      <div
-        className="h-3 rounded-full bg-emerald-500 transition-all"
-        style={{ width: `${score || 0}%` }}
-      />
-    </div>
-  );
-}
-
-function WorkloadIndicator({ count, maxCount }) {
-  const activeCount = typeof count === 'number' ? count : 0;
-  const max = Math.max(1, typeof maxCount === 'number' ? maxCount : 1);
-
-  // Thresholds (UI): low -> green, medium -> yellow, high -> red
-  const level = activeCount <= 2 ? 'low' : activeCount <= 5 ? 'medium' : 'high';
-
-  const badgeClasses =
-    level === 'low'
-      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-      : level === 'medium'
-        ? 'bg-amber-100 text-amber-800 border-amber-200'
-        : 'bg-rose-100 text-rose-800 border-rose-200';
-
-  const barClasses =
-    level === 'low'
-      ? 'bg-emerald-500'
-      : level === 'medium'
-        ? 'bg-amber-500'
-        : 'bg-rose-500';
-
-  const textClasses =
-    level === 'low'
-      ? 'text-emerald-700'
-      : level === 'medium'
-        ? 'text-amber-700'
-        : 'text-rose-700';
-
-  const pct = Math.min(100, Math.round((activeCount / max) * 100));
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`inline-flex items-center px-2 py-1 rounded border text-xs font-bold ${badgeClasses}`}>
-        {level === 'low' ? 'Low' : level === 'medium' ? 'Medium' : 'High'}
-      </div>
-      <div className="flex-1">
-        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-          <div className={`h-2 rounded-full ${barClasses}`} style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-      <span className={`text-sm font-semibold ${textClasses}`}>{activeCount}</span>
-    </div>
-  );
-}
+import { AlertTriangle, Plus } from 'lucide-react';
+import { useDebounce } from '@/hooks/use-debounce';
+import OfficerFilters from './components/OfficerFilters';
+import OfficersTable from './components/OfficersTable';
+import OfficerModal from './components/OfficerModal';
 
 export default function AdminManageOfficers() {
   const queryClient = useQueryClient();
-  const { data: officers = [], isLoading } = useQuery({
-    queryKey: ['admin-officers'],
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [search, setSearch] = useState('');
+  const [department, setDepartment] = useState('');
+  const [area, setArea] = useState('');
+  const [status, setStatus] = useState('');
+  const [selectedOfficer, setSelectedOfficer] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [assignModal, setAssignModal] = useState({ open: false, officer: null, complaintId: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', department: '', area: '' });
+  const [showAdd, setShowAdd] = useState(false);
+  const debouncedSearch = useDebounce(search, 300);
+
+  const parseList = (payload) => {
+    const root = payload?.data?.data ?? payload?.data ?? payload;
+    return {
+      results: Array.isArray(root?.results) ? root.results : (Array.isArray(root) ? root : []),
+      total: Number(root?.total ?? (Array.isArray(root) ? root.length : 0)),
+      totalPages: Number(root?.totalPages ?? 1),
+      page: Number(root?.page ?? 1),
+    };
+  };
+
+  const officersQuery = useQuery({
+    queryKey: ['admin-officers', page, limit, debouncedSearch, department, area, status],
     queryFn: async () => {
-      try {
-        const res = await adminAPI.getAllOfficers();
-        return res.data.data || [];
-      } catch (err) {
-        console.warn('adminAPI.getAllOfficers failed', err?.message || err);
-        return [];
-      }
+      const res = await adminAPI.getAllOfficers({ page, limit, search: debouncedSearch, department, area, status });
+      return parseList(res.data);
     },
-    staleTime: 60 * 1000,
+    keepPreviousData: true,
   });
 
-  // Modal state
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editOfficer, setEditOfficer] = useState(null);
-
-  // Add Officer form state
-  const [addForm, setAddForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    department: '',
-    area: '',
-    complaintsAssigned: 0,
-  });
-  const [addFormError, setAddFormError] = useState('');
-  const [addFormSuccess, setAddFormSuccess] = useState('');
-  // Edit Officer form state
-  const [editForm, setEditForm] = useState({
-    name: '',
-    email: '',
-    department: '',
-    area: '',
-    complaintsAssigned: 0,
-  });
-  const [editFormError, setEditFormError] = useState('');
-  const [editFormSuccess, setEditFormSuccess] = useState('');
-
-  // Placeholder for add, edit, delete, view performance
-  const addOfficerMutation = useMutation({
-    mutationFn: (data) => adminAPI.createOfficer(data),
-    onSuccess: () => {
-      setAddFormSuccess('Officer added successfully!');
-      setAddFormError('');
-      setAddForm({ name: '', email: '', password: '', department: '', area: '' });
-      queryClient.invalidateQueries(['admin-officers']);
-      setTimeout(() => {
-        setShowAddModal(false);
-        setAddFormSuccess('');
-      }, 1200);
-    },
-    onError: (err) => {
-      setAddFormError(err?.response?.data?.message || 'Failed to add officer.');
-      setAddFormSuccess('');
+  const complaintsQuery = useQuery({
+    queryKey: ['admin-unassigned-complaints'],
+    queryFn: async () => {
+      const res = await adminAPI.getAllComplaints({ page: 1, limit: 100, assignedOfficer: null });
+      const root = res?.data?.data ?? {};
+      return Array.isArray(root?.results) ? root.results : [];
     },
   });
-  const editOfficerMutation = useMutation({
-    mutationFn: ({ id, data }) => adminAPI.updateOfficer(id, data),
-    onSuccess: () => {
-      setEditFormSuccess('Officer updated successfully!');
-      setEditFormError('');
-      setEditOfficer(null);
-      setEditForm({ name: '', email: '', department: '', area: '' });
-      queryClient.invalidateQueries(['admin-officers']);
-      setTimeout(() => {
-        setShowEditModal(false);
-        setEditFormSuccess('');
-      }, 1200);
-    },
-    onError: (err) => {
-      setEditFormError(err?.response?.data?.message || 'Failed to update officer.');
-      setEditFormSuccess('');
-    },
-  });
-  const deleteOfficerMutation = useMutation({
-    mutationFn: (id) => adminAPI.deleteOfficer(id),
-    onSuccess: () => queryClient.invalidateQueries(['admin-officers']),
-  });
 
-  // Table columns
-  const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'department', label: 'Department' },
-    { key: 'area', label: 'Assigned Area' },
-    { key: 'complaintsAssigned', label: 'Complaints Assigned' },
-    { key: 'activeComplaints', label: 'Active Complaints Count' },
-    { key: 'performance', label: 'Performance' },
-    { key: 'actions', label: 'Actions' },
-  ];
-
-  // Normalize officer data
+  const officers = officersQuery.data?.results || [];
   const tableData = useMemo(() => {
     return officers.map((o) => {
-      const complaintsList = Array.isArray(o.complaints) ? o.complaints : [];
-      const complaintsAssignedCount =
-        typeof o.complaintsAssigned === 'number' ? o.complaintsAssigned : complaintsList.length;
-
-      const activeFromList = complaintsList.filter((c) => {
-        const status = (c?.status || '').toString().toLowerCase();
-        return status !== 'resolved';
-      }).length;
-
-      // UI-only: if API returns a complaints list with statuses, use it; otherwise use complaintsAssigned as a fallback.
-      const activeComplaintsCount = complaintsList.length ? activeFromList : complaintsAssignedCount;
-
+      const complaints = Array.isArray(o.complaints) ? o.complaints : [];
+      const assigned = typeof o.complaintsAssigned === 'number' ? o.complaintsAssigned : complaints.length;
+      const active = complaints.length ? complaints.filter((c) => (c?.status || '').toLowerCase() !== 'resolved').length : assigned;
+      const resolved = Math.max(0, assigned - active);
       return {
         ...o,
-        area: o.area || '-',
-        complaintsAssigned: complaintsAssignedCount,
-        activeComplaintsCount,
-        // Deterministic placeholder: avoids Math.random() during render.
-        performance:
-          typeof o.performanceScore === 'number'
-            ? o.performanceScore
-            : Math.min(100, 55 + (activeComplaintsCount % 45)),
+        isActive: typeof o.isActive === 'boolean' ? o.isActive : !o.blocked,
+        complaintsAssigned: assigned,
+        activeComplaintsCount: active,
+        performance: typeof o.performanceScore === 'number' ? o.performanceScore : Math.min(100, 55 + (active % 45)),
+        performanceStats: {
+          totalAssigned: assigned,
+          resolved,
+          pending: active,
+          avgResolutionTime: o.avgResolutionTime || 'N/A',
+        },
       };
     });
   }, [officers]);
 
-  const maxActiveComplaintsCount = useMemo(() => {
-    return Math.max(
-      1,
-      ...tableData.map((t) => (typeof t.activeComplaintsCount === 'number' ? t.activeComplaintsCount : 0))
-    );
+  const maxActive = useMemo(() => Math.max(1, ...tableData.map((x) => x.activeComplaintsCount || 0)), [tableData]);
+  const bestOfficer = useMemo(() => {
+    if (!tableData.length) return null;
+    return [...tableData].sort((a, b) => (a.activeComplaintsCount - b.activeComplaintsCount))[0];
   }, [tableData]);
+
+  const addMutation = useMutation({
+    mutationFn: (payload) => adminAPI.createOfficer(payload),
+    onSuccess: () => {
+      setShowAdd(false);
+      setForm({ name: '', email: '', password: '', department: '', area: '' });
+      queryClient.invalidateQueries({ queryKey: ['admin-officers'] });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: (officer) => adminAPI.updateOfficerStatus(officer._id, !officer.isActive),
+    onMutate: async (officer) => {
+      queryClient.setQueryData(['admin-officers', page, limit, debouncedSearch, department, area, status], (old) =>
+        old ? { ...old, results: (old.results || []).map((r) => (r._id === officer._id ? { ...r, isActive: !r.isActive, blocked: r.isActive } : r)) } : old
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['admin-officers'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => adminAPI.deleteOfficer(id),
+    onMutate: async (id) => {
+      queryClient.setQueryData(['admin-officers', page, limit, debouncedSearch, department, area, status], (old) =>
+        old ? { ...old, results: (old.results || []).filter((r) => r._id !== id) } : old
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['admin-officers'] }),
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: ({ complaintId, officerId }) => adminAPI.assignOfficer(complaintId, officerId),
+    onSuccess: () => {
+      setAssignModal({ open: false, officer: null, complaintId: '' });
+      queryClient.invalidateQueries({ queryKey: ['admin-officers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-unassigned-complaints'] });
+    },
+  });
+
+  const totalPages = Math.max(1, officersQuery.data?.totalPages || 1);
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-slate-900">Manage Officers</h1>
-          <Button onClick={() => setShowAddModal(true)} className="gap-2">
-            <Plus className="h-5 w-5" /> Add Officer
-          </Button>
+      <div className="space-y-6 p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Manage Officers</h1>
+            <p className="text-sm text-slate-600">Best officer based on workload: <span className="font-semibold">{bestOfficer?.name || 'N/A'}</span></p>
+          </div>
+          <Button onClick={() => setShowAdd(true)} className="gap-2"><Plus className="h-4 w-4" /> Add Officer</Button>
         </div>
-        {/* Card + Table Hybrid */}
-        <Card className="overflow-x-auto">
-          <CardHeader>
-            <CardTitle>Officer List</CardTitle>
-          </CardHeader>
+
+        <Card>
+          <CardHeader><CardTitle>Filters</CardTitle></CardHeader>
           <CardContent>
-            <Table
-              columns={columns}
-              data={tableData}
-              isLoading={isLoading}
-              emptyMessage="No officers found"
-              renderRow={officer => (
-                <tr key={officer._id} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                  <td className="px-4 py-3 font-medium text-slate-900">{officer.name}</td>
-                  <td className="px-4 py-3 text-slate-700">{officer.department}</td>
-                  <td className="px-4 py-3 text-slate-600">{officer.area || '-'}</td>
-                  <td className="px-4 py-3 text-center">{officer.complaintsAssigned}</td>
-                  <td className="px-4 py-3 min-w-[240px]">
-                    <WorkloadIndicator
-                      count={officer.activeComplaintsCount}
-                      maxCount={maxActiveComplaintsCount}
-                    />
-                  </td>
-                  <td className="px-4 py-3 min-w-[120px]">
-                    <OfficerPerformanceBar score={officer.performance} />
-                    <span className="text-xs text-slate-500 ml-2 align-middle">{officer.performance}%</span>
-                  </td>
-                  <td className="px-4 py-3 flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      title="Edit Officer"
-                      onClick={() => {
-                        setEditOfficer(officer);
-                        setEditForm({
-                          name: officer.name,
-                          email: officer.email,
-                          department: officer.department,
-                          area: officer.area || '',
-                        });
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      title="Delete Officer"
-                      onClick={() => deleteOfficerMutation.mutate(officer._id)}
-                      disabled={deleteOfficerMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4 text-rose-500" />
-                    </Button>
-                    <Button variant="ghost" size="sm" title="View Performance"><BarChart2 className="h-4 w-4 text-emerald-500" /></Button>
-                  </td>
-                </tr>
-              )}
+            <OfficerFilters
+              search={search}
+              onSearchChange={(v) => { setSearch(v); setPage(1); }}
+              department={department}
+              onDepartmentChange={(v) => { setDepartment(v); setPage(1); }}
+              area={area}
+              onAreaChange={(v) => { setArea(v); setPage(1); }}
+              status={status}
+              onStatusChange={(v) => { setStatus(v); setPage(1); }}
+              departments={['Road Damage', 'Garbage', 'Streetlight', 'Water Leakage', 'Other']}
             />
           </CardContent>
         </Card>
-        {/* Add Officer Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-semibold mb-4">Add New Officer</h2>
-              {addFormSuccess && <div className="mb-2 text-green-600 text-sm">{addFormSuccess}</div>}
-              {addFormError && <div className="mb-2 text-rose-600 text-sm font-semibold">{addFormError}</div>}
-              <form
-                onSubmit={e => {
-                  e.preventDefault();
-                  // Basic frontend validation
-                  if (!addForm.name || !addForm.email || !addForm.password || !addForm.department || !addForm.area) {
-                    setAddFormError('All fields including area are required.');
-                    setAddFormSuccess('');
-                    return;
-                  }
-                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addForm.email)) {
-                    setAddFormError('Invalid email address.');
-                    setAddFormSuccess('');
-                    return;
-                  }
-                  if (addForm.password.length < 8) {
-                    setAddFormError('Password must be at least 8 characters.');
-                    setAddFormSuccess('');
-                    return;
-                  }
-                  setAddFormError('');
-                  addOfficerMutation.mutate(addForm);
-                }}
-                className="space-y-4"
-              >
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Name"
-                  required
-                  value={addForm.name}
-                  onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Email"
-                  type="email"
-                  required
-                  value={addForm.email}
-                  onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Password"
-                  type="password"
-                  required
-                  value={addForm.password}
-                  onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Department"
-                  required
-                  value={addForm.department}
-                  onChange={e => setAddForm(f => ({ ...f, department: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Assigned Area"
-                  value={addForm.area}
-                  onChange={e => setAddForm(f => ({ ...f, area: e.target.value }))}
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                  <Button type="submit" disabled={addOfficerMutation.isPending}>Add Officer</Button>
-                </div>
-              </form>
-            </div>
-          </div>
+
+        {officersQuery.isError && (
+          <Card className="border-rose-200 bg-rose-50/80">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-2 text-rose-700"><AlertTriangle className="h-4 w-4" /> Failed to load officers.</div>
+              <Button size="sm" onClick={() => officersQuery.refetch()}>Retry</Button>
+            </CardContent>
+          </Card>
         )}
-        {/* Edit Officer Modal */}
-        {showEditModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-semibold mb-4">Edit Officer</h2>
-              {editFormError && <div className="mb-2 text-red-600 text-sm">{editFormError}</div>}
-              {editFormSuccess && <div className="mb-2 text-green-600 text-sm">{editFormSuccess}</div>}
-              <form
-                onSubmit={e => {
-                  e.preventDefault();
-                  // Basic frontend validation
-                  if (!editForm.name || !editForm.email || !editForm.department || !editForm.area) {
-                    setEditFormError('All fields including area are required.');
-                    setEditFormSuccess('');
-                    return;
-                  }
-                                  <input
-                                    className="w-full border rounded px-3 py-2"
-                                    placeholder="Complaints Assigned"
-                                    type="number"
-                                    min={0}
-                                    value={editForm.complaintsAssigned}
-                                    onChange={e => setEditForm(f => ({ ...f, complaintsAssigned: Number(e.target.value) }))}
-                                  />
-                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
-                    setEditFormError('Invalid email address.');
-                    setEditFormSuccess('');
-                    return;
-                  }
-                  setEditFormError('');
-                  if (editOfficer) {
-                    editOfficerMutation.mutate({ id: editOfficer._id, data: editForm });
-                  }
-                }}
-                className="space-y-4"
-              >
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Name"
-                  required
-                  value={editForm.name}
-                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Email"
-                  type="email"
-                  required
-                  value={editForm.email}
-                  onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Department"
-                  required
-                  value={editForm.department}
-                  onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))}
-                />
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Assigned Area"
-                  value={editForm.area}
-                  onChange={e => setEditForm(f => ({ ...f, area: e.target.value }))}
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
-                  <Button type="submit" disabled={editOfficerMutation.isPending}>Save Changes</Button>
-                </div>
-              </form>
-            </div>
+
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b"><CardTitle>Officer List ({officersQuery.data?.total || tableData.length})</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <OfficersTable
+              officers={tableData}
+              isLoading={officersQuery.isLoading}
+              maxActiveComplaintsCount={maxActive}
+              onView={(o) => { setSelectedOfficer(o); setModalOpen(true); }}
+              onToggleStatus={(o) => {
+                if (!window.confirm(`Are you sure you want to ${o.isActive ? 'block' : 'unblock'} ${o.name}?`)) return;
+                statusMutation.mutate(o);
+              }}
+              onDelete={(o) => {
+                if (!window.confirm(`Delete officer ${o.name}?`)) return;
+                deleteMutation.mutate(o._id);
+              }}
+              onAssignComplaint={(o) => setAssignModal({ open: true, officer: o, complaintId: '' })}
+              processingId={statusMutation.variables?._id}
+            />
+          </CardContent>
+        </Card>
+
+        <div className="flex items-center justify-between rounded-xl border bg-white px-4 py-3">
+          <div className="text-sm text-slate-600">Page <span className="font-semibold text-slate-900">{page}</span> of <span className="font-semibold text-slate-900">{totalPages}</span></div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
           </div>
-        )}
+        </div>
       </div>
+
+      <OfficerModal officer={selectedOfficer} open={modalOpen} onClose={() => { setModalOpen(false); setSelectedOfficer(null); }} />
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5">
+            <h3 className="mb-3 text-lg font-semibold">Add Officer</h3>
+            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); addMutation.mutate(form); }}>
+              <input className="w-full rounded border px-3 py-2" placeholder="Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+              <input className="w-full rounded border px-3 py-2" placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
+              <input className="w-full rounded border px-3 py-2" placeholder="Password" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required />
+              <input className="w-full rounded border px-3 py-2" placeholder="Department" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))} required />
+              <input className="w-full rounded border px-3 py-2" placeholder="Area" value={form.area} onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
+                <Button type="submit" disabled={addMutation.isPending}>Save</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {assignModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-5">
+            <h3 className="text-lg font-semibold">Assign Complaint</h3>
+            <p className="mt-1 text-sm text-slate-600">Officer: {assignModal.officer?.name} ({assignModal.officer?.officerId})</p>
+            <div className="mt-3 space-y-3">
+              <select value={assignModal.complaintId} onChange={(e) => setAssignModal((s) => ({ ...s, complaintId: e.target.value }))} className="w-full rounded border px-3 py-2">
+                <option value="">Select complaint</option>
+                {complaintsQuery.data?.map((c) => (
+                  <option key={c._id} value={c.issueId || c._id}>{c.title || c.issueId || c._id}</option>
+                ))}
+              </select>
+              <div className="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                Smart assignment indicator: this officer currently has {assignModal.officer?.activeComplaintsCount || 0} active complaints.
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setAssignModal({ open: false, officer: null, complaintId: '' })}>Cancel</Button>
+                <Button
+                  onClick={() =>
+                    assignMutation.mutate({
+                      complaintId: assignModal.complaintId,
+                      officerId: assignModal.officer?.officerId || assignModal.officer?._id,
+                    })
+                  }
+                  disabled={!assignModal.complaintId || assignMutation.isPending}
+                >
+                  Assign Complaint
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
