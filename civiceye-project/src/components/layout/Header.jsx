@@ -76,7 +76,7 @@ export default function Header() {
               >
                 <Bell className="h-5 w-5 text-slate-600" />
                 {!isNotifLoading && unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-black">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -88,7 +88,7 @@ export default function Header() {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-sm font-semibold">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-black text-sm font-semibold">
                     {getUserInitials()}
                   </div>
                   <div className="hidden text-left lg:block">
@@ -131,7 +131,7 @@ export default function Header() {
                 <Button variant="ghost" size="sm">Login</Button>
               </Link>
               <Link to="/register">
-                <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+                <Button size="sm" className="bg-slate-900 text-black hover:bg-slate-800">
                   Register
                 </Button>
               </Link>

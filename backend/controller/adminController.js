@@ -5,21 +5,20 @@
  */
 export const getAuditLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 20, action, targetType, adminId, startDate, endDate } = req.query;
+    const { page = 1, limit = 20, action, targetType, adminName, startDate, endDate } = req.query;
     const query = {};
     if (action) query.action = action;
     if (targetType) query.targetType = targetType;
-    if (adminId) query.adminId = adminId;
+    if (adminName) query.adminName = { $regex: adminName, $options: 'i' };
     if (startDate || endDate) {
-      query.timestamp = {};
-      if (startDate) query.timestamp.$gte = new Date(startDate);
-      if (endDate) query.timestamp.$lte = new Date(endDate);
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
     }
     const logs = await AuditLog.find(query)
-      .sort({ timestamp: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit))
-      .populate('adminId', 'name email');
+      .sort({ createdAt: -1 })
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit));
     const total = await AuditLog.countDocuments(query);
     res.status(200).json({
       success: true,
@@ -89,13 +88,13 @@ export const deleteCitizen = async (req, res) => {
     if (!citizen) {
       return res.status(404).json({ success: false, data: null, message: 'Citizen not found' });
     }
-    // Audit log: Citizen deleted
-    await AuditLog.create({
-      adminId: req.user?._id,
-      action: 'delete_citizen',
+    await logAdminAction({
+      adminId: req.admin?.id || req.admin?._id,
+      adminName: req.admin?.name || req.admin?.email || 'Admin',
+      action: 'DELETE',
       targetType: 'Citizen',
       targetId: citizen._id.toString(),
-      details: { name: citizen.name, email: citizen.email },
+      description: `Deleted citizen ${citizen.name || citizen._id}`,
     });
     res.status(200).json({ success: true, data: { id: citizen._id }, message: 'Citizen deleted successfully' });
   } catch (error) {
@@ -135,6 +134,7 @@ import Feedback from '../model/feedbackSchema.js';
 import Notification from '../model/notificationSchema.js';
 import Settings from '../model/settingsSchema.js';
 import AuditLog from '../model/auditLogSchema.js';
+import { logAdminAction } from '../lib/logAdminAction.js';
 
 /**
  * @desc Get all complaints for admin dashboard
@@ -258,18 +258,13 @@ export const assignOfficerToComplaint = async (req, res) => {
       link: `/officer/complaints/${complaint._id}`,
     });
 
-    // Audit log: Complaint assigned
-    await AuditLog.create({
-      adminId: req.user?._id,
-      action: 'assign_complaint',
+    await logAdminAction({
+      adminId: req.admin?.id || req.admin?._id,
+      adminName: req.admin?.name || req.admin?.email || 'Admin',
+      action: 'ASSIGN',
       targetType: 'Complaint',
-      targetId: complaint._id.toString(),
-      details: {
-        assignedOfficer: officer.officerId,
-        previousOfficer: previousOfficerId?.toString() || null,
-        complaintTitle: complaint.title,
-        complaintCategory: complaint.category,
-      },
+      targetId: String(complaint.issueId || complaint._id),
+      description: `Assigned complaint ${complaint.issueId || complaint._id} to ${officer.officerId}`,
     });
     res.status(200).json({ success: true, message: 'Complaint assigned to officer', complaint: populatedComplaint });
   } catch (error) {
@@ -452,18 +447,13 @@ export const escalateComplaint = async (req, res) => {
       });
     }
 
-    // Audit log: Complaint escalated
-    await AuditLog.create({
-      adminId: req.user?._id,
-      action: 'escalate_complaint',
+    await logAdminAction({
+      adminId: req.admin?.id || req.admin?._id,
+      adminName: req.admin?.name || req.admin?.email || 'Admin',
+      action: 'ESCALATE',
       targetType: 'Complaint',
-      targetId: complaint._id.toString(),
-      details: {
-        escalationLevel: newLevel,
-        assignedOfficer: complaint.assignedOfficer?.toString() || null,
-        complaintTitle: complaint.title,
-        complaintCategory: complaint.category,
-      },
+      targetId: String(complaint.issueId || complaint._id),
+      description: `Escalated complaint ${complaint.issueId || complaint._id} to level ${newLevel}`,
     });
     res.status(200).json({ success: true, message: 'Complaint escalated', complaint: updated });
   } catch (error) {
@@ -604,13 +594,13 @@ export const updateAdminSettings = async (req, res) => {
       upsert: true,
       runValidators: true,
     });
-    // Audit log: Admin settings updated
-    await AuditLog.create({
-      adminId: req.user?._id,
-      action: 'update_settings',
+    await logAdminAction({
+      adminId: req.admin?.id || req.admin?._id,
+      adminName: req.admin?.name || req.admin?.email || 'Admin',
+      action: 'UPDATE',
       targetType: 'Settings',
       targetId: settings._id.toString(),
-      details: payload,
+      description: 'Updated admin settings',
     });
     res.status(200).json({
       success: true,
@@ -700,13 +690,13 @@ export const createOfficer = async (req, res) => {
 
       try {
         await newOfficer.save();
-        // Audit log: Officer created
-        await AuditLog.create({
-          adminId: req.user?._id,
-          action: 'create_officer',
+        await logAdminAction({
+          adminId: req.admin?.id || req.admin?._id,
+          adminName: req.admin?.name || req.admin?.email || 'Admin',
+          action: 'CREATE',
           targetType: 'Officer',
-          targetId: newOfficer._id.toString(),
-          details: { officerId: newOfficer.officerId, name, email, department, phone },
+          targetId: newOfficer.officerId,
+          description: 'Created new officer',
         });
         return res.status(201).json({
           success: true,
@@ -803,13 +793,13 @@ export const deleteOfficer = async (req, res) => {
       });
     }
 
-    // Audit log: Officer deleted
-    await AuditLog.create({
-      adminId: req.user?._id,
-      action: 'delete_officer',
+    await logAdminAction({
+      adminId: req.admin?.id || req.admin?._id,
+      adminName: req.admin?.name || req.admin?.email || 'Admin',
+      action: 'DELETE',
       targetType: 'Officer',
-      targetId: officer._id.toString(),
-      details: { name: officer.name, email: officer.email, officerId: officer.officerId },
+      targetId: officer.officerId || officer._id.toString(),
+      description: `Deleted officer ${officer.officerId || officer._id}`,
     });
     res.status(200).json({
       success: true,

@@ -1,7 +1,7 @@
 import React from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, GradientCard } from '@/components/ui/card';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '@/services/api';
 import { Users, Mail, Calendar, Lock, Trash2, Building2, SlidersHorizontal } from 'lucide-react';
@@ -68,7 +68,7 @@ export default function AdminDepartments() {
         </div>
 
         <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-800 text-white rounded-t-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-800 text-black rounded-t-xl">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Users className="h-5 w-5" />
               Officer Management
@@ -133,7 +133,7 @@ export default function AdminDepartments() {
         </Card>
 
         <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white rounded-t-xl">
+          <CardHeader className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-black rounded-t-xl">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Building2 className="h-5 w-5" /> Area-wise Issue Distribution
             </CardTitle>

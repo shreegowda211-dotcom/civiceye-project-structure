@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
+import { GradientCard } from '@/components/ui/card';
 
 const roles = [
   {
@@ -74,7 +75,7 @@ export default function Landing() {
       <main className="flex-1">
 
         {/* HERO */}
-        <section className="relative bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-white">
+        <section className="relative bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-700 text-black">
           <div className="w-full px-10 py-16 text-center animate-fade-in">
             <p className="inline-block rounded-full bg-white/10 px-4 py-1 text-xs tracking-wide backdrop-blur">
               Government of India Initiative
@@ -103,7 +104,7 @@ export default function Landing() {
 
               <Link
                 to="/login"
-                className="rounded-md border border-white/40 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+                className="rounded-md border border-white/40 px-6 py-2.5 text-sm font-semibold text-black hover:bg-white/10"
               >
                 Login to Dashboard
               </Link>
@@ -120,15 +121,7 @@ export default function Landing() {
 
           <div className="mt-10 grid gap-6 md:grid-cols-4">
             {features.map((f) => (
-              <div
-                key={f.title}
-                className="group rounded-xl bg-white p-6 shadow-sm transition hover:shadow-lg hover:-translate-y-1 duration-300"
-              >
-                <h3 className="text-sm font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  {f.description}
-                </p>
-              </div>
+              <GradientCard key={f.title} title={f.title} description={f.description} buttonText="Learn more" />
             ))}
           </div>
           </div>
@@ -159,7 +152,7 @@ export default function Landing() {
       className="relative z-10 rounded-xl bg-white p-6 shadow-sm transition hover:shadow-lg hover:-translate-y-1 duration-300"
     >
       <div className="mx-auto flex h-14 w-14 items-center justify-center 
-                      rounded-full bg-sky-600 text-white font-bold text-lg 
+                      rounded-full bg-sky-600 text-black font-bold text-lg 
                       shadow-md ring-4 ring-white">
         {i + 1}
       </div>
@@ -185,32 +178,22 @@ export default function Landing() {
 
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {roles.map((role) => (
-              <div
-                key={role.title}
-                className="group rounded-xl bg-white p-6 shadow-sm transition hover:shadow-lg hover:-translate-y-1 duration-300"
-              >
-                <h3 className="text-base font-semibold">
-                  {role.title}
-                </h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  {role.description}
-                </p>
-
-                <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <GradientCard key={role.title} title={role.title} description={role.description}>
+                <ul className="mt-4 space-y-2 text-sm text-white/90">
                   {role.points.map((p) => (
                     <li key={p} className="flex gap-2">
-                      <span className="text-emerald-600">✓</span>
-                      {p}
+                      <span className="text-white">✓</span>
+                      <span className="text-white/90">{p}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </GradientCard>
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section className="bg-sky-800 text-white">
+        <section className="bg-sky-800 text-black">
           <div className="mx-auto max-w-screen-xl px-6 py-16 text-center">
             <h2 className="text-2xl font-semibold">
               Ready to Make a Difference?

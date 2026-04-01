@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, GradientCard } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { citizenAPI } from '@/services/api';
 import { safeQuery } from '@/lib/safeQuery';
@@ -144,7 +144,7 @@ export default function CitizenDashboard() {
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <motion.div
-          className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 shadow-2xl text-white"
+          className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 shadow-2xl text-black"
           whileHover={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)' }}
           transition={{ duration: 0.3 }}
         >
@@ -167,16 +167,7 @@ export default function CitizenDashboard() {
                 Overview of your complaints and quick actions.
               </motion.p>
             </div>
-            <Link to="/citizen/report" className="w-full sm:w-auto">
-              <motion.div
-                className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold bg-gradient-to-r from-emerald-400 to-sky-500 text-white shadow-xl transition-all"
-                whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)' }}
-                whileTap={{ y: -2 }}
-              >
-                <PlusCircle className="h-5 w-5" />
-                Report New Issue
-              </motion.div>
-            </Link>
+
           </div>
         </motion.div>
 
@@ -197,47 +188,25 @@ export default function CitizenDashboard() {
           animate="show"
         >
           {[
-            { title: 'Total Complaints', value: userComplaints.length, icon: FileText, color: 'border-slate-300', indicator: 'bg-slate-400', subtitle: 'All submitted issues' },
-            { title: 'Pending Complaints', value: pendingCount, icon: AlertTriangle, color: 'border-amber-300', indicator: 'bg-amber-400', subtitle: 'Awaiting action' },
-            { title: 'In Progress Complaints', value: inProgressCount, icon: Clock, color: 'border-blue-300', indicator: 'bg-blue-400', subtitle: 'Currently being worked' },
-            { title: 'Resolved Complaints', value: resolvedCount, icon: CheckCircle2, color: 'border-emerald-300', indicator: 'bg-emerald-400', subtitle: 'Completed issues' },
+            { title: 'Total Complaints', value: userComplaints.length, icon: FileText, subtitle: 'All submitted issues' },
+            { title: 'Pending Complaints', value: pendingCount, icon: AlertTriangle, subtitle: 'Awaiting action' },
+            { title: 'In Progress Complaints', value: inProgressCount, icon: Clock, subtitle: 'Currently being worked' },
+            { title: 'Resolved Complaints', value: resolvedCount, icon: CheckCircle2, subtitle: 'Completed issues' },
           ].map((card) => (
             <motion.div
               key={card.title}
-              className={`relative overflow-hidden rounded-2xl border ${card.color} bg-white/70 backdrop-blur-xl shadow-lg p-5 transition-all duration-300`}
-              whileHover={{
-                y: -8,
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                scale: 1.02,
-              }}
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
               }}
+              whileHover={{ y: -8 }}
             >
-              <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full opacity-20 bg-gradient-to-br from-white to-slate-200"></div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-wide text-slate-500">{card.title}</p>
-                  <motion.p
-                    className="mt-2 text-4xl font-extrabold text-slate-900"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                  >
-                    {card.value}
-                  </motion.p>
-                  <p className="mt-1 text-xs text-slate-500">{card.subtitle}</p>
+              <GradientCard title={card.title} description={card.subtitle}>
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-4xl font-extrabold text-white">{card.value}</p>
+                  <card.icon className="h-8 w-8 text-white/50" />
                 </div>
-                <motion.div
-                  className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
-                  whileHover={{ rotate: 10, scale: 1.1 }}
-                  transition={{ type: 'easeOut', duration: 0.3 }}
-                >
-                  <card.icon className="h-6 w-6" />
-                </motion.div>
-              </div>
-              <span className={`mt-4 inline-block h-1.5 w-16 rounded-full ${card.indicator}`}></span>
+              </GradientCard>
             </motion.div>
           ))}
         </motion.div>
@@ -266,14 +235,14 @@ export default function CitizenDashboard() {
           >
             <Card className="glass-card p-4 shadow-lg rounded-2xl border border-white/20 bg-white/20 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:border-white/40">
               <CardHeader className="pb-2 border-b border-white/20">
-                <CardTitle className="text-lg font-semibold text-white">Monthly Complaints Overview</CardTitle>
+                <CardTitle className="text-lg font-semibold text-black">Monthly Complaints Overview</CardTitle>
               </CardHeader>
               <CardContent className="pt-4 h-80 min-h-[260px]">
                 <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
                   <LineChart data={monthlyTrendData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                    <XAxis dataKey="month" tick={{ fill: '#f8fafc' }} />
-                    <YAxis tick={{ fill: '#f8fafc' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.2)" />
+                    <XAxis dataKey="month" tick={{ fill: '#000000' }} />
+                    <YAxis tick={{ fill: '#000000' }} />
                     <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} />
                     <Line type="monotone" dataKey="complaints" stroke="#34d399" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
@@ -290,8 +259,8 @@ export default function CitizenDashboard() {
             }}
           >
             <Card className="glass-card p-4 shadow-lg rounded-2xl border border-white/20 bg-white/20 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:border-white/40">
-              <CardHeader className="pb-2 border-b border-white/20">
-                <CardTitle className="text-lg font-semibold text-white">Complaint Status Distribution</CardTitle>
+                <CardHeader className="pb-2 border-b border-white/20">
+                <CardTitle className="text-lg font-semibold text-black">Complaint Status Distribution</CardTitle>
               </CardHeader>
               <CardContent className="pt-4 h-80 min-h-[260px]">
                 <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
@@ -343,15 +312,15 @@ export default function CitizenDashboard() {
               <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-white opacity-20"></div>
               <div className="flex items-center gap-4">
                 <motion.div
-                  className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/25 text-white"
+                  className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/25 text-black"
                   whileHover={{ scale: 1.1, rotate: 10 }}
                   transition={{ type: 'easeOut', duration: 0.3 }}
                 >
                   <PlusCircle className="h-8 w-8" />
                 </motion.div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Report New Issue</h2>
-                  <p className="text-white/90 mt-1">Quickly create a new complaint and track it in real-time.</p>
+                  <h2 className="text-2xl font-bold text-black">Report New Issue</h2>
+                  <p className="text-black/90 mt-1">Quickly create a new complaint and track it in real-time.</p>
                 </div>
               </div>
             </motion.div>
@@ -383,7 +352,7 @@ export default function CitizenDashboard() {
           transition={{ delay: 0.5 }}
         >
           <Card className="shadow-lg border-0 transition-all duration-300 hover:shadow-2xl">
-            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-800 text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-800 text-black rounded-t-lg">
               <CardTitle className="text-2xl">Recent Complaints</CardTitle>
             </CardHeader>
             <CardContent className="p-6">

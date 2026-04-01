@@ -1,13 +1,3 @@
-import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
-      <Route
-        path="/admin/audit-logs"
-        element={
-          <ProtectedRoute allowedRoles={[ 'admin' ]}>
-            <AdminAuditLogs />
-          </ProtectedRoute>
-        }
-      />
-// removed placeholder toaster/sonner/tooltip providers
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,17 +26,15 @@ import OfficerNotifications from "./pages/officer/OfficerNotifications";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminAllUsers from "./pages/admin/AllIssues";
+import AdminAllUsers from "./pages/admin/AdminAllUsers";
 import AdminAreas from "./pages/admin/AdminAreas";
 import AdminCategoryDashboard from "./pages/admin/AdminCategoryDashboard";
 import AdminDepartments from "./pages/admin/AdminDepartments";
 import AdminEscalatedComplaints from "./pages/admin/EscalatedComplaints";
 import AdminFeedbackMonitoring from "./pages/admin/AdminFeedbackMonitoring";
 import AdminHelp from "./pages/admin/AdminHelp";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminManageOfficers from "./pages/admin/AdminManageOfficers";
-import AdminReports from "./pages/admin/AdminReports";
-import AdminServices from "./pages/admin/AdminServices";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAllIssues from "./pages/admin/AllIssues";
 
@@ -318,22 +306,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/admin/reports"
-        element={
-          <ProtectedRoute allowedRoles={[ 'admin' ]}>
-            <AdminReports />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/services"
-        element={
-          <ProtectedRoute allowedRoles={[ 'admin' ]}>
-            <AdminServices />
-          </ProtectedRoute>
-        }
-      />
-      <Route
+
         path="/admin/settings"
         element={
           <ProtectedRoute allowedRoles={[ 'admin' ]}>
@@ -354,6 +327,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[ 'admin' ]}>
             <AdminFeedbackMonitoring />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminAuditLogs />
           </ProtectedRoute>
         }
       />

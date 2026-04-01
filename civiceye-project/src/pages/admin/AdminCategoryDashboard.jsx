@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardTitle, GradientCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import * as Dialog from "@radix-ui/react-dialog";
 import { Plus, Edit, Trash, X, Download } from "lucide-react";
@@ -159,68 +159,59 @@ export default function AdminCategoryDashboard() {
         </div>
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Complaint Resolution Time</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <GradientCard title="Complaint Resolution Time">
+            <div className="mt-4">
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={resolutionTimeData}>
                   <XAxis dataKey="category" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="avgResolutionHours" fill="#1e3a8a" />
+                  <Bar dataKey="avgResolutionHours" fill="#ffffff" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Complaint Trends</CardTitle>
-            </CardHeader>
-            <CardContent>
+            </div>
+          </GradientCard>
+
+          <GradientCard title="Monthly Complaint Trends">
+            <div className="mt-4">
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={monthlyTrends}>
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="reported" stroke="#1d4ed8" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="resolved" stroke="#10b981" strokeWidth={3} dot={false} />
+                  <Line type="monotone" dataKey="reported" stroke="#ffffff" strokeWidth={3} dot={false} />
+                  <Line type="monotone" dataKey="resolved" stroke="#a7f3d0" strokeWidth={3} dot={false} />
                   <Legend />
                 </LineChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Officer Efficiency Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
+            </div>
+          </GradientCard>
+
+          <GradientCard title="Officer Efficiency Comparison">
+            <div className="mt-4">
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={officerEfficiency}>
                   <XAxis dataKey="officer" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="efficiency" fill="#0ea5e9" />
+                  <Bar dataKey="efficiency" fill="#ffffff" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Area Problem Heat Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
+            </div>
+          </GradientCard>
+
+          <GradientCard title="Area Problem Heat Analysis">
+            <div className="mt-4">
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={areaHeat}>
                   <XAxis dataKey="area" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#f59e0b" />
+                  <Bar dataKey="count" fill="#ffffff" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </GradientCard>
         </div>
         {/* Category List */}
         <div className="mt-8">
@@ -282,7 +273,7 @@ export default function AdminCategoryDashboard() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-2 rounded font-bold uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50"
+                  className="w-full bg-blue-600 text-black py-2 rounded font-bold uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50"
                   disabled={saving}
                 >
                   {saving ? "Saving..." : (editCategory ? "Update Category" : "Add Category")}

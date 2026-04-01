@@ -18,12 +18,12 @@ export function Table({ columns, data, renderRow, emptyMessage = 'No data found'
             <tr>
               <td colSpan={columns.length} className="text-center py-8 text-slate-400">Loading...</td>
             </tr>
-          ) : data.length === 0 ? (
+          ) : Array.isArray(data) && data.length > 0 ? (
+            data.map((row, idx) => renderRow(row, idx))
+          ) : (
             <tr>
               <td colSpan={columns.length} className="text-center py-8 text-slate-400">{emptyMessage}</td>
             </tr>
-          ) : (
-            data.map((row, idx) => renderRow(row, idx))
           )}
         </tbody>
       </table>

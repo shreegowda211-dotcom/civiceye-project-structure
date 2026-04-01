@@ -3,8 +3,8 @@ import React from 'react';
 // basic button variants
 export function Button({ children, variant = 'default', size = 'md', className = '', ...props }) {
   const variantStyles = {
-    default: 'bg-slate-900 text-white hover:bg-slate-800',
-    civic: 'bg-emerald-500 text-white hover:bg-emerald-600',
+    default: 'bg-slate-900 text-black hover:bg-slate-800',
+    civic: 'bg-emerald-500 text-black hover:bg-emerald-600',
     ghost: 'bg-transparent text-slate-900 hover:bg-slate-100',
   };
   const sizeStyles = {

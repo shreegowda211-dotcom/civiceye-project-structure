@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, GradientCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IssueCard } from '@/components/common/IssueCard';
 import { StatsCard } from '@/components/common/StatsCard';
@@ -69,7 +69,7 @@ export default function AllIssues() {
       >
         {/* header with gradient like other pages */}
         <motion.div
-          className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-white"
+          className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-800 rounded-2xl p-8 shadow-lg text-black"
           whileHover={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)' }}
           transition={{ duration: 0.3 }}
         >
@@ -95,7 +95,7 @@ export default function AllIssues() {
             <div className="flex gap-2">
               <motion.button
                 onClick={() => navigate('/citizen')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-all duration-200 font-medium"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-black transition-all duration-200 font-medium"
                 whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.3)' }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -202,7 +202,7 @@ export default function AllIssues() {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           <Card className="shadow-lg border-0 bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+            <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-black">
               <CardTitle className="flex items-center gap-2 text-xl font-semibold">
                 <Filter className="h-5 w-5" />
                 Filter by Status
@@ -229,7 +229,7 @@ export default function AllIssues() {
                     onClick={() => setStatusFilter(option.label)}
                     className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all font-medium ${
                       statusFilter === option.label
-                        ? 'bg-emerald-600 text-white shadow-md'
+                        ? 'bg-emerald-600 text-black shadow-md'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                     whileHover={{ scale: 1.05 }}
@@ -312,7 +312,7 @@ export default function AllIssues() {
                 <p className="text-slate-600 text-lg mb-6">No issues reported yet</p>
                 <motion.button
                   onClick={() => navigate('/citizen/report')}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-black font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all"
                   whileHover={{ scale: 1.05, boxShadow: '0 15px 30px rgba(0,0,0,0.2)' }}
                   whileTap={{ scale: 0.95 }}
                 >

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { User, Briefcase, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAPI } from "@/services/api";
+import { GradientCard } from '@/components/ui/card';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 md:grid-cols-2">
         {/* Left side – brand panel */}
-        <div className="relative hidden bg-gradient-to-br from-sky-800 via-sky-700 to-teal-700 p-10 text-white md:flex md:flex-col md:justify-center">
+        <div className="relative hidden bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 p-10 text-white md:flex md:flex-col md:justify-center">
           <div className="absolute inset-0 opacity-30">
             <div className="absolute -top-24 -right-10 h-56 w-56 rounded-full bg-sky-400 blur-3xl" />
             <div className="absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-teal-400 blur-3xl" />
@@ -115,7 +116,7 @@ export default function Login() {
             <div className="inline-flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-2 backdrop-blur-md shadow-lg">
           <Shield className="h-6 w-6 text-emerald-300" />
   <div className="leading-tight">
-    <p className="text-base font-bold tracking-wide text-white">
+    <p className="text-base font-bold tracking-wide text-black">
       CivicEye
     </p>
     <p className="text-xs text-sky-100/90">
@@ -134,12 +135,7 @@ export default function Login() {
         {/* Right side – form card */}
         <div className="flex flex-col justify-center px-6 py-8 sm:px-8 md:px-10">
           <div className="mx-auto w-full max-w-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Welcome Back
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Sign in to your CivicEye account
-            </p>
+            <GradientCard title="Welcome Back" description="Sign in to your CivicEye account">
 
             {/* flash message */}
             {message && (
@@ -179,7 +175,7 @@ export default function Login() {
         <div
           className={`rounded-xl p-2 transition ${
             role === "Citizen"
-              ? "bg-emerald-500 text-white"
+              ? "bg-emerald-500 text-black"
               : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
           }`}
         >
@@ -209,7 +205,7 @@ export default function Login() {
         <div
           className={`rounded-xl p-2 transition ${
             role === "Officer"
-              ? "bg-sky-500 text-white"
+              ? "bg-sky-500 text-black"
               : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
           }`}
         >
@@ -239,7 +235,7 @@ export default function Login() {
         <div
           className={`rounded-xl p-2 transition ${
             role === "Admin"
-              ? "bg-purple-500 text-white"
+              ? "bg-purple-500 text-black"
               : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
           }`}
         >
@@ -326,7 +322,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
+              className="mt-6 w-full rounded-md bg-white/20 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-white/30">
               {loading ? "Signing In..." : "Sign In"}
             </button>
 
@@ -347,7 +343,7 @@ export default function Login() {
 
             {/* Officer Defaults Info */}
             {role === "Officer"}
-          </form>
+            </form>
 
             {/* // Demo access box 
             <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs text-slate-600">
@@ -357,6 +353,7 @@ export default function Login() {
                 access different dashboards.
               </p>
             </div> */}
+            </GradientCard>
           </div>
         </div>
       </div>

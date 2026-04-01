@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, GradientCard } from '@/components/ui/card';
 import { helpAPI } from '@/services/api';
 import { BookOpen, Users, UserCheck, Building, AlertCircle, BarChart3, Phone, Lock, Search } from 'lucide-react';
 
@@ -113,7 +113,7 @@ export default function AdminHelp() {
               onClick={() => handleCategoryFilter(category)}
               className={`px-4 py-2 rounded-full font-medium transition-all ${
                 selectedCategory === category
-                  ? 'bg-emerald-600 text-white shadow-lg'
+                  ? 'bg-emerald-600 text-black shadow-lg'
                   : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
               }`}
             >

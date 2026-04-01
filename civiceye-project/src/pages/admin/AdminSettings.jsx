@@ -86,12 +86,12 @@ export default function AdminSettings() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-[calc(100vh-94px)] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
+      <div className="min-h-[calc(100vh-94px)] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-black p-6">
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Admin Settings</h1>
-              <p className="text-slate-300">Configure SLA, escalation rules, priorities, security and notification controls.</p>
+              <p className="text-slate-600">Configure SLA, escalation rules, priorities, security and notification controls.</p>
             </div>
             <div className="flex items-center gap-2">
               <Button onClick={handleSubmit} disabled={isSaving || isLoading}>
@@ -121,14 +121,14 @@ export default function AdminSettings() {
               {activeTab === 'General' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm text-slate-200">SLA response time (hours)</label>
+                      <div className="space-y-2">
+                        <label className="text-sm text-slate-700">SLA response time (hours)</label>
                       <input
                         type="number"
                         min={1}
                         value={formData.slaHours}
                         onChange={(e) => setFormData({ ...formData, slaHours: Number(e.target.value) || 0 })}
-                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                       />
                     </div>
                     <div className="space-y-2">
@@ -143,12 +143,12 @@ export default function AdminSettings() {
                       </select>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-slate-200">Priority levels (response hours)</label>
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-700">Priority levels (response hours)</label>
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                       {formData.priorityLevels.map((item, i) => (
                         <div key={`${item.name}-${i}`} className="rounded-lg border border-slate-700 p-3 bg-slate-900/80">
-                          <p className="mb-2 text-sm text-slate-300">{item.name}</p>
+                          <p className="mb-2 text-sm text-slate-600">{item.name}</p>
                           <input
                             type="number"
                             min={1}
@@ -160,7 +160,7 @@ export default function AdminSettings() {
                               );
                               setFormData({ ...formData, priorityLevels: next });
                             }}
-                            className="w-full rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-100"
+                            className="w-full rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-slate-900"
                           />
                         </div>
                       ))}
@@ -172,7 +172,7 @@ export default function AdminSettings() {
               {activeTab === 'Security' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-200">Enable MFA</label>
+                    <label className="text-sm text-slate-700">Enable MFA</label>
                     <select
                       value={formData.securitySettings.mfaEnabled ? 'true' : 'false'}
                       onChange={(e) =>
@@ -184,7 +184,7 @@ export default function AdminSettings() {
                           },
                         })
                       }
-                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                     >
                       <option value="true">Enabled</option>
                       <option value="false">Disabled</option>
@@ -192,7 +192,7 @@ export default function AdminSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-200">Password minimum length</label>
+                    <label className="text-sm text-slate-700">Password minimum length</label>
                     <input
                       type="number"
                       min={6}
@@ -206,12 +206,12 @@ export default function AdminSettings() {
                           },
                         })
                       }
-                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-200">Require numbers in passwords</label>
+                    <label className="text-sm text-slate-700">Require numbers in passwords</label>
                     <select
                       value={formData.securitySettings.passwordRequiresNumbers ? 'true' : 'false'}
                       onChange={(e) =>
@@ -223,7 +223,7 @@ export default function AdminSettings() {
                           },
                         })
                       }
-                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                     >
                       <option value="true">Yes</option>
                       <option value="false">No</option>
@@ -231,7 +231,7 @@ export default function AdminSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-200">Require special characters</label>
+                    <label className="text-sm text-slate-700">Require special characters</label>
                     <select
                       value={formData.securitySettings.passwordRequiresSpecial ? 'true' : 'false'}
                       onChange={(e) =>
@@ -243,7 +243,7 @@ export default function AdminSettings() {
                           },
                         })
                       }
-                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                     >
                       <option value="true">Yes</option>
                       <option value="false">No</option>
@@ -255,7 +255,7 @@ export default function AdminSettings() {
               {activeTab === 'Complaint Rules' && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-200">Auto escalation</label>
+                    <label className="text-sm text-slate-700">Auto escalation</label>
                     <select
                       value={formData.autoEscalationEnabled ? 'true' : 'false'}
                       onChange={(e) => setFormData({ ...formData, autoEscalationEnabled: e.target.value === 'true' })}
@@ -267,7 +267,7 @@ export default function AdminSettings() {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-sm text-slate-200">Escalation rules</p>
+                    <p className="text-sm text-slate-700">Escalation rules</p>
                     <div className="space-y-2">
                       {formData.escalationRules.map((rule, i) => (
                         <div key={`rule-${i}`} className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -281,7 +281,7 @@ export default function AdminSettings() {
                               );
                               setFormData({ ...formData, escalationRules: next });
                             }}
-                            className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                            className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                             placeholder="Threshold hours"
                           />
                           <input
@@ -292,7 +292,7 @@ export default function AdminSettings() {
                               );
                               setFormData({ ...formData, escalationRules: next });
                             }}
-                            className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                            className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                             placeholder="Action"
                           />
                           <button
@@ -301,7 +301,7 @@ export default function AdminSettings() {
                               const next = formData.escalationRules.filter((_, idx) => idx !== i);
                               setFormData({ ...formData, escalationRules: next });
                             }}
-                            className="rounded-lg border border-red-500 px-3 py-2 text-sm text-red-300 hover:bg-red-500/20"
+                            className="rounded-lg border border-red-500 px-3 py-2 text-sm text-red-700 hover:bg-red-500/20"
                           >
                             Remove
                           </button>
@@ -315,7 +315,7 @@ export default function AdminSettings() {
                             escalationRules: [...formData.escalationRules, { level: formData.escalationRules.length + 1, thresholdHours: 24, action: 'Email admin' }],
                           })
                         }
-                        className="rounded-lg border border-emerald-400 px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-400/20"
+                        className="rounded-lg border border-emerald-400 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-400/20"
                       >
                         Add escalation rule
                       </button>
@@ -328,7 +328,7 @@ export default function AdminSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {['email', 'sms', 'push'].map((item) => (
                     <div key={item} className="space-y-2">
-                      <label className="text-sm text-slate-200 capitalize">{item} alerts</label>
+                      <label className="text-sm text-slate-700 capitalize">{item} alerts</label>
                       <select
                         value={formData.notificationSettings[item] ? 'true' : 'false'}
                         onChange={(e) =>
@@ -340,7 +340,7 @@ export default function AdminSettings() {
                             },
                           })
                         }
-                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100"
+                        className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-900"
                       >
                         <option value="true">Enabled</option>
                         <option value="false">Disabled</option>

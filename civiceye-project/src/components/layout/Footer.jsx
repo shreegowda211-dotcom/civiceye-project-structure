@@ -11,10 +11,10 @@ export default function Footer() {
         <div className="grid gap-8 text-sm text-slate-600 md:grid-cols-4">
           {/* Brand */}
           <div className="space-y-2">
-           <div className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 shadow-md hover:shadow-lg transition">
-  <ShieldCheck className="h-7 w-7 text-white" />
-  <span className="text-sm font-semibold text-white">CivicEye</span>
-</div>
+          <div className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 shadow-md hover:shadow-lg transition">
+            <ShieldCheck className="h-7 w-7 text-black" />
+            <span className="text-sm font-semibold text-black">CivicEye</span>
+          </div>
             <p className="max-w-xs text-xs text-slate-500 md:text-sm">
               Smart Public Issue Reporting &amp; Resolution System for transparent
               urban governance.

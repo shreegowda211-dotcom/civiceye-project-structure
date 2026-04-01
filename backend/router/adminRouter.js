@@ -1,16 +1,16 @@
-import { getAuditLogs } from '../controller/adminController.js';
-// Audit log route
-router.get('/audit-logs', verifyAdminToken, getAuditLogs);
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers, createOfficer } from '../controller/loginController.js';
-import { getAllComplaints, assignOfficerToComplaint, autoAssignCategoryComplaints, markComplaintUrgent, escalateComplaint } from '../controller/adminController.js';
+import { adminLogin, getAdminProfile, getAllCitizens, getAllOfficers } from '../controller/loginController.js';
+import { getAllComplaints, assignOfficerToComplaint, autoAssignCategoryComplaints, markComplaintUrgent, escalateComplaint, getAuditLogs, createOfficer } from '../controller/adminController.js';
 import { deleteCitizen, updateCitizen, getAllAreas, createArea, updateArea, deleteArea, assignOfficerToArea, getAllFeedback, getAdminSettings, updateAdminSettings, blockCitizen, blockOfficer } from '../controller/adminController.js';
 import { getAllCategories, addCategory, editCategory, deleteCategory } from '../controller/categoryController.js';
 import { updateOfficer, deleteOfficer } from '../controller/adminController.js';
 import { verifyAdminToken } from '../middleware/authAdmin.js';
 
 const router = express.Router();
+
+// Audit log route
+router.get('/audit-logs', verifyAdminToken, getAuditLogs);
 
 // only login, profile routes
 router.post('/login', adminLogin);

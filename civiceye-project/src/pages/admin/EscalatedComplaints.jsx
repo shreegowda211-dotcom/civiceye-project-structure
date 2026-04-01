@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '@/services/api';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardTitle, GradientCard } from '@/components/ui/card';
 import Table from '@/components/table';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';

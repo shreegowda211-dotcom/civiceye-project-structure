@@ -3,23 +3,39 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardHeader, CardContent } from '../../components/ui/card';
 import { Table } from '../../components/table/Table';
 import { Button } from '../../components/ui/button';
-import adminAPI from '../../services/api';
-// ...existing code...
-// ...existing code removed...
+import { adminAPI } from '../../services/api';
+
 function AdminAllUsers() {
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
 
-  // Make `areas` safe in UI in case data is delayed/missing
-  // (if there is already a query in omitted code, this fallback won't create issues)
-  const safeAreas = [];
+  // Fetch all users (citizens + officers)
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['admin-all-users'],
+    queryFn: async () => {
+      const citizens = await adminAPI.getAllCitizens();
+      const officers = await adminAPI.getAllOfficers();
+      return [...(citizens.data || []), ...(officers.data || [])];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // ...existing code...
+  // Fetch all areas for filter dropdown
+  const { data: areas = [] } = useQuery({
+    queryKey: ['admin-areas'],
+    queryFn: async () => {
+      const res = await adminAPI.getAllAreas();
+      return res.data || [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
   const [editUser, setEditUser] = useState(null);
   const [editForm, setEditForm] = useState({});
   const editModalRef = useRef();
+  
   const editUserMutation = useMutation({
     mutationFn: async ({ user, data }) => {
       if (user.role === 'Officer') {
@@ -29,7 +45,54 @@ function AdminAllUsers() {
       }
     }
   });
-  // ...existing code...
+
+  // Filter users based on search and area
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = !search || 
+      user.name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase());
+    const matchesArea = !areaFilter || user.area === areaFilter;
+    return matchesSearch && matchesArea;
+  });
+
+  // Pagination
+  const startIndex = (page - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const columns = [
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'role', label: 'Role' },
+    { key: 'area', label: 'Area' },
+    { key: 'actions', label: 'Actions' },
+  ];
+
+  const renderRow = (user) => (
+    <tr key={user._id} className="border-b hover:bg-slate-50">
+      <td className="px-4 py-2">{user.name}</td>
+      <td className="px-4 py-2">{user.email}</td>
+      <td className="px-4 py-2">
+        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+          {user.role || 'N/A'}
+        </span>
+      </td>
+      <td className="px-4 py-2">{user.area || 'N/A'}</td>
+      <td className="px-4 py-2">
+        <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={() => {
+            setEditUser(user);
+            setEditForm({ name: user.name, email: user.email, area: user.area || '' });
+            editModalRef.current?.showModal();
+          }}
+        >
+          Edit
+        </Button>
+      </td>
+    </tr>
+  );
   return (
     <>
       <Card className="w-full">
@@ -44,16 +107,16 @@ function AdminAllUsers() {
               placeholder="Search by name or email"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="input input-bordered"
+              className="border border-slate-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400 font-semibold text-slate-900 bg-white"
             />
             <select
               value={areaFilter}
               onChange={e => setAreaFilter(e.target.value)}
-              className="select select-bordered"
+              className="border border-slate-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400 font-semibold text-slate-900 bg-white"
             >
               <option value="">All Areas</option>
-              {(areas || safeAreas).map(area => (
-                <option key={area._id} value={area._id}>{area.name}</option>
+              {areas?.map(area => (
+                <option key={area._id} value={area._id}>{area.name || area.areaName}</option>
               ))}
             </select>
           </div>
@@ -69,16 +132,18 @@ function AdminAllUsers() {
               Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
             </span>
             <div className="flex gap-2">
-              <button
-                className="btn btn-sm"
+              <Button
+                size="sm"
+                variant="default"
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
-              >Previous</button>
-              <button
-                className="btn btn-sm"
+              >Previous</Button>
+              <Button
+                size="sm"
+                variant="default"
                 disabled={endIndex >= filteredUsers.length}
                 onClick={() => setPage(page + 1)}
-              >Next</button>
+              >Next</Button>
             </div>
           </div>
         </CardContent>
@@ -124,8 +189,8 @@ function AdminAllUsers() {
               />
             </div>
             <div className="flex gap-2 mt-4">
-              <Button type="submit" variant="primary" disabled={editUserMutation.isPending}>Save</Button>
-              <Button type="button" variant="outline" onClick={() => { setEditUser(null); editModalRef.current?.close(); }}>Cancel</Button>
+              <Button type="submit" variant="default" disabled={editUserMutation.isPending}>Save</Button>
+              <Button type="button" variant="ghost" onClick={() => { setEditUser(null); editModalRef.current?.close(); }}>Cancel</Button>
             </div>
           </form>
         )}

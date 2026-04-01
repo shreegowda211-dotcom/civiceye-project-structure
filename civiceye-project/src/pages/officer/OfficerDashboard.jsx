@@ -2,7 +2,7 @@ import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, GradientCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
@@ -79,74 +79,33 @@ export default function OfficerDashboard() {
         {/* ========== SUMMARY CARDS ========== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
-          {/* Card 1: Assigned Complaints */}
-          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-semibold mb-1">Assigned Issues</p>
-                  <p className="text-4xl font-bold text-slate-900">{assignedCount}</p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                  <ClipboardList className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-              <div className="h-1 w-16 bg-blue-500 rounded-full"></div>
+          <GradientCard title="Assigned Issues" description={`${assignedCount} total`}>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-4xl font-bold text-white">{assignedCount}</p>
+              <ClipboardList className="h-8 w-8 text-white/50" />
             </div>
-          </div>
+          </GradientCard>
 
-          {/* Card 2: Pending Complaints */}
-          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-semibold mb-1">Pending Issues</p>
-                  <p className="text-4xl font-bold text-slate-900">{pendingCount}</p>
-                </div>
-                <div className="bg-amber-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                  <AlertTriangle className="h-6 w-6 text-amber-600" />
-                </div>
-              </div>
-              <div className="h-1 w-16 bg-amber-500 rounded-full"></div>
+          <GradientCard title="Pending Issues" description={`${pendingCount} waiting`}>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-4xl font-bold text-white">{pendingCount}</p>
+              <AlertTriangle className="h-8 w-8 text-white/50" />
             </div>
-          </div>
+          </GradientCard>
 
-          {/* Card 3: In Progress Complaints */}
-          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-semibold mb-1">In Progress</p>
-                  <p className="text-4xl font-bold text-slate-900">{inProgressCount}</p>
-                </div>
-                <div className="bg-indigo-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                  <Zap className="h-6 w-6 text-indigo-600" />
-                </div>
-              </div>
-              <div className="h-1 w-16 bg-indigo-500 rounded-full"></div>
+          <GradientCard title="In Progress" description={`${inProgressCount} active`}>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-4xl font-bold text-white">{inProgressCount}</p>
+              <Zap className="h-8 w-8 text-white/50" />
             </div>
-          </div>
+          </GradientCard>
 
-          {/* Card 4: Resolved Complaints */}
-          <div className="group relative bg-white/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-default">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-semibold mb-1">Resolved Issues</p>
-                  <p className="text-4xl font-bold text-slate-900">{resolvedCount}</p>
-                </div>
-                <div className="bg-emerald-100 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                  <CheckSquare className="h-6 w-6 text-emerald-600" />
-                </div>
-              </div>
-              <div className="h-1 w-16 bg-emerald-500 rounded-full"></div>
+          <GradientCard title="Resolved Issues" description={`${resolvedCount} completed`}>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-4xl font-bold text-white">{resolvedCount}</p>
+              <CheckSquare className="h-8 w-8 text-white/50" />
             </div>
-          </div>
-
+          </GradientCard>
         </div>
 
         {/* ========== QUICK ACTIONS SECTION ========== */}

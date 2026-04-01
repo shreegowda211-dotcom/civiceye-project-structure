@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '@/services/api';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardTitle, GradientCard } from '@/components/ui/card';
 import Table from '@/components/table';
 import { Button } from '@/components/ui/button';
 import { Star, User, MessageCircle, BarChart2 } from 'lucide-react';
@@ -56,21 +56,21 @@ export default function AdminFeedbackMonitoring() {
             <Card className="border-emerald-300/50 bg-emerald-950/60">
               <CardContent>
                 <div className="flex items-center gap-2 text-emerald-200"> <BarChart2 className="h-5 w-5" /> <span className="font-semibold">Avg Rating</span></div>
-                <p className="text-3xl font-bold text-white">{avgRating.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-black">{avgRating.toFixed(2)}</p>
                 <p className="text-sm text-emerald-300">out of 5 from {feedback.length} feedbacks</p>
               </CardContent>
             </Card>
             <Card className="border-cyan-300/50 bg-cyan-950/60">
               <CardContent>
                 <div className="flex items-center gap-2 text-cyan-200"> <Star className="h-5 w-5" /> <span className="font-semibold">Avg Satisfaction</span></div>
-                <p className="text-3xl font-bold text-white">{avgSatisfaction.toFixed(1)}%</p>
+                <p className="text-3xl font-bold text-black">{avgSatisfaction.toFixed(1)}%</p>
                 <p className="text-sm text-cyan-300">{satisfactionLevel}</p>
               </CardContent>
             </Card>
             <Card className="border-violet-300/50 bg-violet-950/60">
               <CardContent>
                 <div className="flex items-center gap-2 text-violet-200"> <User className="h-5 w-5" /> <span className="font-semibold">Feedback Count</span></div>
-                <p className="text-3xl font-bold text-white">{feedback.length}</p>
+                <p className="text-3xl font-bold text-black">{feedback.length}</p>
                 <p className="text-sm text-violet-300">Most recent first</p>
               </CardContent>
             </Card>
@@ -79,7 +79,7 @@ export default function AdminFeedbackMonitoring() {
 
         <Card className="border-slate-700/70 bg-slate-900/80">
           <CardHeader>
-            <CardTitle className="text-white">Citizen Feedback</CardTitle>
+            <CardTitle className="text-black">Citizen Feedback</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <Table

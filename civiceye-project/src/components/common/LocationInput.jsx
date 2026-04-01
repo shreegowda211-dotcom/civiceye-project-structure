@@ -208,25 +208,7 @@ export default function LocationInput({
     );
   }, [onChange]);
 
-  // Initialize simple map using local Leaflet
-  const initializeMap = useCallback((location) => {
-    // Load Leaflet if not already loaded
-    if (!window.L) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = '/libs/leaflet/leaflet.min.css';
-      document.head.appendChild(link);
 
-      const script = document.createElement('script');
-      script.src = '/libs/leaflet/leaflet.min.js';
-      script.onload = () => {
-        renderMap(location);
-      };
-      document.head.appendChild(script);
-    } else {
-      renderMap(location);
-    }
-  }, [renderMap]);
 
   // Render map
   const renderMap = useCallback((location) => {
@@ -264,6 +246,26 @@ export default function LocationInput({
       .bindPopup('Selected Location')
       .openPopup();
   }, []);
+
+  // Initialize simple map using local Leaflet
+  const initializeMap = useCallback((location) => {
+    // Load Leaflet if not already loaded
+    if (!window.L) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/libs/leaflet/leaflet.min.css';
+      document.head.appendChild(link);
+
+      const script = document.createElement('script');
+      script.src = '/libs/leaflet/leaflet.min.js';
+      script.onload = () => {
+        renderMap(location);
+      };
+      document.head.appendChild(script);
+    } else {
+      renderMap(location);
+    }
+  }, [renderMap]);
 
   // Clear selection
   const handleClear = useCallback(() => {

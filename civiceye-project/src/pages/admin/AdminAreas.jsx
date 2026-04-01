@@ -81,8 +81,10 @@ export default function AdminAreas() {
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
               <h2 className="text-lg font-semibold mb-3">Areas</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {loadingAreas ? <div>Loading...</div> : (
-                  (areas || []).map(a => (
+                {loadingAreas ? (
+                  <div>Loading...</div>
+                ) : Array.isArray(areas) && areas.length > 0 ? (
+                  areas.map(a => (
                     <div key={a._id || a.name} className="p-3 border rounded-lg bg-slate-50">
                       <div className="flex justify-between items-start">
                         <div>
@@ -105,6 +107,8 @@ export default function AdminAreas() {
                       </div>
                     </div>
                   ))
+                ) : (
+                  <div>No areas available</div>
                 )}
               </div>
             </div>

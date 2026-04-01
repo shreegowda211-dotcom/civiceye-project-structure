@@ -134,6 +134,7 @@ export const adminAPI = {
   createOfficer: (data) => apiClient.post('/admin/officers', data),
   updateOfficer: (id, data) => apiClient.put(`/admin/officers/${id}`, data),
   updateCitizen: (id, data) => apiClient.put(`/admin/citizens/${id}`, data),
+  deleteCitizen: (id) => apiClient.delete(`/admin/citizens/${id}`),
   deleteOfficer: (id) => apiClient.delete(`/admin/officers/${id}`),
   blockCitizen: (id, blocked) => apiClient.put(`/admin/citizens/${id}/block`, { blocked }),
   blockOfficer: (id, blocked) => apiClient.put(`/admin/officers/${id}/block`, { blocked }),

@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citizenAPI } from '@/services/api';
 import { safeQuery } from '@/lib/safeQuery';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, GradientCard } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, MessageCircle, CheckCircle2 } from 'lucide-react';
 

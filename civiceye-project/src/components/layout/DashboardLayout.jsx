@@ -57,8 +57,6 @@ export default function DashboardLayout({ children }) {
     { icon: <ClipboardList className="h-5 w-5" />, label: "Audit Logs", path: "/admin/audit-logs" },
     // /admin/categories route is already used by Category Analytics
     { icon: <Settings className="h-5 w-5" />, label: "Departments", path: "/admin/departments" },
-    { icon: <Settings className="h-5 w-5" />, label: "Services", path: "/admin/services" },
-    { icon: <Settings className="h-5 w-5" />, label: "Reports", path: "/admin/reports" },
     { icon: <AlertCircle className="h-5 w-5" />, label: "Escalations", path: "/admin/escalated" },
     { icon: <UserCheck className="h-5 w-5" />, label: "Feedback", path: "/admin/feedback" },
     { icon: <Settings className="h-5 w-5" />, label: "Settings", path: "/admin/settings" },
@@ -105,12 +103,12 @@ export default function DashboardLayout({ children }) {
 
     {/* User Info */}
     <div className="border-b border-slate-700 px-4 py-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold text-sm">
+        <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-black font-semibold text-sm">
           {getUserInitials()}
         </div>
         <div className="hidden sm:block">
-          <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
+          <p className="truncate text-sm font-semibold text-black">{user?.name}</p>
           <p className="truncate text-xs text-slate-400 capitalize">{user?.role}</p>
         </div>
       </div>
@@ -125,8 +123,8 @@ export default function DashboardLayout({ children }) {
           className={({ isActive }) =>
             `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
               isActive
-                ? "bg-emerald-600 text-white shadow-md"
-                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                ? "bg-emerald-600 text-black shadow-md"
+                : "text-slate-300 hover:bg-slate-800 hover:text-black"
             }`
           }
           onClick={() => setSidebarOpen(false)}
@@ -160,7 +158,7 @@ export default function DashboardLayout({ children }) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="mb-4 md:hidden rounded-lg bg-slate-900 p-2 text-white hover:bg-slate-800"
+              className="mb-4 md:hidden rounded-lg bg-slate-900 p-2 text-black hover:bg-slate-800"
             >
               {sidebarOpen ? (
                 <X className="h-6 w-6" />

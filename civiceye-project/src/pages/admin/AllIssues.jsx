@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '@/services/api';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardTitle, GradientCard } from '@/components/ui/card';
 import Table from '@/components/table';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Filter, UserPlus, RefreshCw, AlertTriangle, ArrowUpRight, Loader2, X } from 'lucide-react';
@@ -44,7 +44,8 @@ export default function AdminAllIssues() {
       if (filters.dateFrom) backendFilters.dateFrom = filters.dateFrom;
       if (filters.dateTo) backendFilters.dateTo = filters.dateTo;
       const res = await adminAPI.getAllComplaints(backendFilters);
-      return res.data.complaints || [];
+      console.log('Fetched complaints:', res.data);
+      return res.data?.data || [];
     },
     staleTime: 60 * 1000,
   });
@@ -95,6 +96,22 @@ export default function AdminAllIssues() {
     },
   });
 
+  // Add officer assignment mutation
+  const assignOfficerMutation = useMutation({
+    mutationFn: ({ complaintId, officerId }) => 
+      adminAPI.assignOfficer(complaintId, officerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-complaints']);
+      refetch();
+      closeAssignModal();
+    },
+    onError: (error) => {
+      console.error('Assignment failed:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to assign officer';
+      setOfficerIdError(errorMsg);
+    },
+  });
+
   const normalizeOfficerId = (v) => (typeof v === 'string' ? v.trim().toUpperCase() : '');
   const validateOfficerId = (v) => {
     const val = normalizeOfficerId(v);
@@ -129,12 +146,15 @@ export default function AdminAllIssues() {
     if (err) return;
 
     setAssigning(true);
-    // UI-only loading simulation
-    setTimeout(() => {
-      setAssigning(false);
-      closeAssignModal();
-      alert('Officer assignment prepared (UI only). Connect API later.');
-    }, 1200);
+    // Call actual API to assign officer
+    assignOfficerMutation.mutate(
+      { complaintId: selectedComplaint._id, officerId: normalizeOfficerId(officerIdInput) },
+      {
+        onSettled: () => {
+          setAssigning(false);
+        },
+      }
+    );
   };
 
   const handleMarkUrgent = (complaint) => {
@@ -194,7 +214,7 @@ export default function AdminAllIssues() {
               size="sm"
               onClick={handleSmartAutoAssignOfficer}
               disabled={smartAutoAssigning}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-300"
+              className="bg-emerald-600 hover:bg-emerald-700 text-black border border-emerald-300"
               title="Smart auto-assign (UI preview only)"
             >
               {smartAutoAssigning ? (
@@ -353,13 +373,13 @@ export default function AdminAllIssues() {
               </div>
 
               <div className="flex gap-2 mt-5">
-                <Button type="button" variant="outline" onClick={closeAssignModal} disabled={assigning} className="w-full">
+                <Button type="button" variant="ghost" onClick={closeAssignModal} disabled={assigning} className="w-full">
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={assigning}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-black disabled:opacity-60"
                 >
                   {assigning ? (
                     <span className="inline-flex items-center gap-2">

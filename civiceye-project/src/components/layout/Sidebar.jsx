@@ -29,19 +29,19 @@ export default function Sidebar({ collapsed, onToggle, onLogout }) {
     >
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 p-2 text-white">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 p-2 text-black">
             <Shield className="h-5 w-5" />
           </div>
           {!collapsed && (
             <div>
-              <h1 className="text-lg font-bold text-white">CivicEye</h1>
+              <h1 className="text-lg font-bold text-black">CivicEye</h1>
               <p className="text-xs text-slate-200">Citizen Console</p>
             </div>
           )}
         </div>
         <button
           onClick={onToggle}
-          className="rounded-md border border-slate-300/30 px-2 py-1 text-xs text-white hover:bg-white/20"
+          className="rounded-md border border-slate-300/30 px-2 py-1 text-xs text-black hover:bg-white/20"
           aria-label="Toggle sidebar"
         >
           {collapsed ? '>' : '<'}
@@ -56,8 +56,8 @@ export default function Sidebar({ collapsed, onToggle, onLogout }) {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-xl p-2 text-sm font-semibold transition hover:bg-white/20 hover:translate-x-0.5 ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                  : 'text-white/90'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-black shadow-lg'
+                  : 'text-black/90'
               }`
             }
           >
@@ -70,7 +70,7 @@ export default function Sidebar({ collapsed, onToggle, onLogout }) {
       <div className="border-t border-white/20 p-4">
         <button
           onClick={onLogout}
-          className="flex items-center gap-2 w-full rounded-lg border border-slate-300/25 px-3 py-2 text-sm font-semibold text-white hover:border-red-200 hover:bg-red-500/20"
+          className="flex items-center gap-2 w-full rounded-lg border border-slate-300/25 px-3 py-2 text-sm font-semibold text-black hover:border-red-200 hover:bg-red-500/20"
         >
           <LogOut className="h-4 w-4" />
           {!collapsed && 'Logout'}
