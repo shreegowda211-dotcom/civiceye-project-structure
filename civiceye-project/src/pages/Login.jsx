@@ -304,9 +304,7 @@ export default function Login() {
                 >
                   Password
                 </label>
-                <button className="text-xs font-medium text-sky-700 hover:underline">
-                  Forgot password?
-                </button>
+                
               </div>
               <input
                 id="password"

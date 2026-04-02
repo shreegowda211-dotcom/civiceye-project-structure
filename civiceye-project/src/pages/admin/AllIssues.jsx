@@ -33,7 +33,7 @@ export default function AdminAllIssues() {
   const [assigning, setAssigning] = useState(false);
 
   // Fetch all complaints (with backend filters)
-  const { data: complaints = [], isLoading, refetch } = useQuery({
+  const { data: complaintsRaw, isLoading, refetch } = useQuery({
     queryKey: ['admin-complaints', filters],
     queryFn: async () => {
       // Pass all filters to backend API
@@ -49,6 +49,8 @@ export default function AdminAllIssues() {
     },
     staleTime: 60 * 1000,
   });
+  // Use paginated results from backend
+  const complaints = Array.isArray(complaintsRaw?.data?.results) ? complaintsRaw.data.results : [];
 
   // Table columns
   const columns = [
@@ -59,13 +61,14 @@ export default function AdminAllIssues() {
     { key: 'priority', label: 'Priority' },
     { key: 'status', label: 'Status' },
     { key: 'assignedOfficer', label: 'Assigned Officer' },
+    { key: 'officerId', label: 'Officer ID' },
     { key: 'createdAt', label: 'Reported' },
     { key: 'actions', label: 'Actions' },
   ];
 
   // Filtering logic (area and date are now backend, but fallback to client-side for partial matches)
   const filteredComplaints = useMemo(() => {
-    return complaints.filter(c => {
+    return (Array.isArray(complaints) ? complaints : []).filter(c => {
       if (filters.area && !(c.location || '').toLowerCase().includes(filters.area.toLowerCase())) return false;
       if (filters.dateFrom && new Date(c.createdAt) < new Date(filters.dateFrom)) return false;
       if (filters.dateTo && new Date(c.createdAt) > new Date(filters.dateTo)) return false;
@@ -204,6 +207,11 @@ export default function AdminAllIssues() {
 
   return (
     <DashboardLayout>
+      {/* DEBUG: Show raw complaints data for troubleshooting */}
+      <div style={{background: '#fffbe6', color: '#b36b00', padding: '8px', margin: '8px 0', fontSize: '12px', border: '1px solid #ffe58f', borderRadius: '4px'}}>
+        <strong>Debug: complaints data</strong>
+        <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0}}>{JSON.stringify(complaints, null, 2)}</pre>
+      </div>
       <div className="p-6 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h1 className="text-2xl font-extrabold text-blue-900 tracking-widest uppercase">All Issues</h1>
@@ -311,6 +319,7 @@ export default function AdminAllIssues() {
                     <td className="px-4 py-3"><PriorityBadge priority={(complaint.priority || '').toLowerCase()} /></td>
                     <td className="px-4 py-3"><StatusBadge status={(complaint.status || '').toLowerCase()} /></td>
                     <td className="px-4 py-3 text-slate-700 font-semibold">{complaint.assignedOfficer?.name || 'Unassigned'}</td>
+                    <td className="px-4 py-3 text-slate-700 font-semibold">{complaint.assignedOfficer?.officerId || '-'}</td>
                     <td className="px-4 py-3 text-slate-500 font-semibold tracking-wide">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 flex gap-2">
                       <Button size="sm" variant="ghost" className="border border-blue-200 hover:bg-blue-100" onClick={() => openAssignModal(complaint, 'assign')} title="Assign Officer" disabled={assigning}><UserPlus className="h-4 w-4 text-blue-700" /></Button>
@@ -322,10 +331,10 @@ export default function AdminAllIssues() {
                   </tr>
                   {expandedRow === complaint._id && (
                     <tr className="bg-blue-50/60">
-                      <td colSpan={8} className="p-4 text-sm text-blue-900">
+                      <td colSpan={10} className="p-4 text-sm text-blue-900">
                         <div className="mb-2"><span className="font-bold uppercase tracking-widest">Description:</span> {complaint.description}</div>
                         <div className="mb-2"><span className="font-bold uppercase tracking-widest">Reported by:</span> {complaint.citizen?.name || complaint.citizen}</div>
-                        <div className="mb-2"><span className="font-bold uppercase tracking-widest">Assigned Officer:</span> {complaint.assignedOfficer?.name || 'Unassigned'}</div>
+                        <div className="mb-2"><span className="font-bold uppercase tracking-widest">Assigned Officer:</span> {complaint.assignedOfficer?.name || 'Unassigned'} ({complaint.assignedOfficer?.officerId || '-'})</div>
                         {complaint.urgent && <div className="inline-block px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-extrabold tracking-widest mr-2">URGENT</div>}
                         {complaint.escalated && <div className="inline-block px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-extrabold tracking-widest">ESCALATED</div>}
                       </td>

@@ -26,7 +26,7 @@ export default function AllIssues() {
   const [statusFilter, setStatusFilter] = useState('All');
 
   // Fetch all complaints from backend
-  const { data: userComplaints = [], isLoading, isError, error } = useQuery({
+  const { data: userComplaintsRaw, isLoading, isError, error } = useQuery({
     queryKey: ['all-complaints', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -40,16 +40,18 @@ export default function AllIssues() {
     },
     enabled: !!user,
   });
+  // Ensure userComplaints is always an array
+  const userComplaints = Array.isArray(userComplaintsRaw) ? userComplaintsRaw : [];
 
-  const resolvedCount = userComplaints.filter((i) => i.status === 'Resolved').length;
-  const inProgressCount = userComplaints.filter((i) => i.status === 'In Progress').length;
-  const pendingCount = userComplaints.filter((i) => i.status === 'Pending').length;
-  const rejectedCount = userComplaints.filter((i) => i.status === 'Rejected').length;
+  const resolvedCount = (userComplaints || []).filter((i) => i.status === 'Resolved').length;
+  const inProgressCount = (userComplaints || []).filter((i) => i.status === 'In Progress').length;
+  const pendingCount = (userComplaints || []).filter((i) => i.status === 'Pending').length;
+  const rejectedCount = (userComplaints || []).filter((i) => i.status === 'Rejected').length;
 
   // Filter complaints based on selected status
   const filteredComplaints = statusFilter === 'All'
-    ? userComplaints
-    : userComplaints.filter((c) => c.status === statusFilter);
+    ? (userComplaints || [])
+    : (userComplaints || []).filter((c) => c.status === statusFilter);
 
   const statusOptions = [
     { label: 'All', icon: <FileText className="h-4 w-4" /> },

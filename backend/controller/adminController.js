@@ -244,13 +244,14 @@ export const getAllComplaints = async (req, res) => {
       if (endDate) filter.createdAt.$lte = new Date(endDate);
     }
 
+    // Populate assignedOfficer with officerId, name, email, department
     const pagination = await paginate(
       Complaint,
       filter,
       parseInt(page, 10),
       parseInt(limit, 10),
       [
-        { path: 'assignedOfficer', select: 'name email department' },
+        { path: 'assignedOfficer', select: 'officerId name email department' },
         { path: 'citizen', select: 'name email' }
       ]
     );
